@@ -1,5 +1,6 @@
 from data_collector import DataCollector
 from datetime import datetime
+import pytest
 
 class TestDataCollecor:
 	@classmethod
@@ -10,7 +11,7 @@ class TestDataCollecor:
 	def test_stock_list(self):
 		assert self.d.dfSPY500_2009.loc[0, 'Symbol'] == 'A'
 		assert self.d.dfSPY500_2009.loc[1, 'Symbol'] == 'AA'
-		assert self.d.dfSPY500_2009.loc[234, 'Symbol'] == 'JEC'
+		assert self.d.dfSPY500_2009.loc[10, 'Symbol'] == 'JEC'
 
 	def test_stock_dict_original_value(self):
 		assert self.d.stock_dict_original['GOOG'].get_value(datetime(2009, 1, 2), 'Adj Close') - 160 < 1
@@ -25,6 +26,18 @@ class TestDataCollecor:
 
 	def test_dataset_original_length(self):
 		assert len(self.d.dataset_original) == 1633
+
+	def test_df_indexer(self):
+		try:
+			self.d._df_indexer(self.d.stock_dict_original['GOOG'], datetime(2009, 2, 2), 1).get_value(datetime(2009, 2, 2), 'Adj Close')
+		except KeyError:
+			pass
+		else:
+			pytest.fail("There's no error? Something's clearly wrong...")
+
+		print(self.d._df_indexer(self.d.stock_dict_original['GOOG'], datetime(2013, 1, 21), 50))
+		assert self.d._df_indexer(self.d.stock_dict_original['GOOG'], datetime(2009, 1, 21), 1).get_value(datetime(2009, 1, 20), 'Adj Close') - 141 < 1
+
 	# def test_match_SPY_dates(self):
 	# 	pass
 
