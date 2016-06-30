@@ -29,14 +29,21 @@ class TestDataCollecor:
 
 	def test_df_indexer(self):
 		try:
-			self.d._df_indexer(self.d.stock_dict_original['GOOG'], datetime(2009, 2, 2), 1).get_value(datetime(2009, 2, 2), 'Adj Close')
+			self.d._df_indexer('GOOG', 'original', datetime(2009, 2, 2), 1).get_value(datetime(2009, 2, 2), 'Adj Close')
 		except KeyError:
 			pass
 		else:
 			pytest.fail("There's no error? Something's clearly wrong...")
 
-		print(self.d._df_indexer(self.d.stock_dict_original['GOOG'], datetime(2013, 1, 21), 50))
-		assert self.d._df_indexer(self.d.stock_dict_original['GOOG'], datetime(2009, 1, 21), 1).get_value(datetime(2009, 1, 20), 'Adj Close') - 141 < 1
+		print(self.d._df_indexer('GOOG', 'original', datetime(2013, 1, 21), 50))
+		assert self.d._df_indexer('GOOG', 'original', datetime(2009, 1, 21), 1).get_value(datetime(2009, 1, 20), 'Adj Close') - 141 < 1
+
+	def test_stock_price_adjuster(self):
+		assert self.d._stock_price_adjuster('GOOG').get_value(datetime(2009, 7, 9), 'Adj High') - 207.0183 < 0.001
+		assert self.d._stock_price_adjuster('GOOG').get_value(datetime(2010, 3, 8), 'Adj Low') - 280.2253 < 0.001
+		assert self.d._stock_price_adjuster('IBM').get_value(datetime(2009, 1, 26), 'Adj Volume') - 11632811 < 0.001
+
+
 
 	# def test_match_SPY_dates(self):
 	# 	pass
