@@ -62,7 +62,7 @@ class DataCollector:
   		self.dataset_original = pd.DataFrame(index=dfSPY['2010-01-01':].index)
 
   		df = pd.DataFrame(columns=self.dataset_original_columns)
-  		symbol = 'GOOGL'
+  		symbol = 'IBM'
 		date = datetime(2010, 1, 4) # Dataset start date
 		dfTemp = self.stock_dict_original[symbol][date:].copy()
 
@@ -123,9 +123,10 @@ class DataCollector:
 			else:
 			    df.ix[index, 'RiseOrFall'] = 0
 
-			print("GOOGL")
+			print("IBM")
 			print("Date {}".format(index) + " clear!")
 
+		df.to_csv("IBM.csv")
 
   	def _df_indexer(self, symbol, data_source, current_date, date_span):
   		"""
