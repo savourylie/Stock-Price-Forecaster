@@ -1,9 +1,10 @@
 import matplotlib.pyplot as plt
 from sklearn import cross_validation
 from sklearn.learning_curve import learning_curve
+import numpy as np
 
 def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
-                        n_jobs=1, train_sizes=np.linspace(.1, 1.0, 5)):
+                        n_jobs=1, train_sizes=np.linspace(.1, 1.0, 5), scoring=None):
     """
     Generate a simple plot of the test and traning learning curve.
 
@@ -34,13 +35,17 @@ def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
     n_jobs : integer, optional
         Number of jobs to run in parallel (default 1).
     """
-    plt.figure()
+    plt.figure(figsize=(12, 6))
     plt.title(title)
     if ylim is not None:
         plt.ylim(*ylim)
     plt.xlabel("Training examples")
     plt.ylabel("Score")
-    train_sizes, train_scores, test_scores = learning_curve(estimator, X, y, cv=cv, n_jobs=n_jobs, train_sizes=train_sizes)
+
+    if 'reg' in estimator.__class__.__name__.lower() and scoring is None:
+        scoring = 'mean_squared_error'
+
+    train_sizes, train_scores, test_scores = learning_curve(estimator, X, y, cv=cv, scoring=scoring, n_jobs=n_jobs, train_sizes=train_sizes)
     train_scores_mean = np.mean(train_scores, axis=1)
     train_scores_std = np.std(train_scores, axis=1)
     test_scores_mean = np.mean(test_scores, axis=1)
