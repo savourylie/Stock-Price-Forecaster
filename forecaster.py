@@ -4,6 +4,8 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 from datetime import date, datetime, timedelta
+from data_loader import DataLoader
+from ETL import ETL
 
 # Data Visualization
 # %matplotlib inline
@@ -29,30 +31,32 @@ from math import floor
 pd.set_option('display.max_columns', 200)
 
 class Forecaster:
-	def __init__(self, symbol, dataloader):
+	def __init__(self, dataloader, symbol):
 		self.label_ready = False
 		self.label_name = None
 
 		self.symbol = symbol
-		self.e = ETL(symbol, dataloader)
+		self.e = ETL(dataloader, symbol)
 		self.x_days = None
-		self.df_main = e.df_temp
-
+		self.df_main = self.e.df_temp
 
 	def set_x_days(self, x):
 		self.x_days = x
+		self._make_label()
 
-	def make_label(self):
+	def _make_label(self):
 		if self.x_days is None or type(self.x_days) is not type(1):
-			print("Please set how far in the future would you like to forecast.")
+			raise ValueError("Please set how far in the future would you like to forecast.")
 
-		else if self.label_ready:
+		elif self.label_ready:
 			self.df_main.drop([self.label_name], axis=1, inplace=True)
+			self.label_name = self.symbol + str(self.x_days) + 'd'
+			self.df_main[self.label_name] = self.df_main.shift(-self.x_days)[self.symbol]
 
 		else:
 			self.label_ready = True
 			self.label_name = self.symbol + str(self.x_days) + 'd'
-			self.df_main[self.label_name] = self.df_main.shift(-5)[self.symbol]
+			self.df_main[self.label_name] = self.df_main.shift(-self.x_days)[self.symbol]
 
 
 
