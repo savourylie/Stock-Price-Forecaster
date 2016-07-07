@@ -21,6 +21,7 @@ class TestForecaster:
 	def test_make_label(self):
 		x_days = 15
 		self.f.set_x_days(x_days)
+		print(self.f.df_main.columns)
 		assert np.abs(self.f.df_main.ix[datetime(2009, 1, 15), 'GOOGL' + str(x_days) + 'd'] - 185.825823) < 0.0001
 
 		x_days = 20
