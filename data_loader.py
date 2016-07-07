@@ -68,9 +68,12 @@ class DataLoader:
         for symbol in self.df_stock_names.loc[:, 'Symbol']:
             df_temp = pd.read_csv('stock_data/' + symbol + '.csv', index_col="Date", parse_dates=True, usecols = ['Date', 'Volume', 'Adj Close'], na_values=['nan'])
             df_temp = df_temp.rename(columns={'Volume': symbol + '_Vol', 'Adj Close': symbol})
-            df1 = self.df_base.join(df_temp)
-            df1 = df1.dropna()
 
+            # Forward/Back fill missing values
+            df_temp.fillna(method='ffill', inplace=True)
+            df_temp.fillna(method='bfill', inplace=True)
+
+            df1 = self.df_base.join(df_temp, how='left')
             self.stock_dict_original[symbol] = df1
 
 
