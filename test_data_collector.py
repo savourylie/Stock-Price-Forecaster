@@ -2,7 +2,7 @@ from data_collector import DataCollector
 from datetime import datetime
 import pytest
 
-class TestDataCollecor:
+class TestDataCollector:
 	@classmethod
 	def setup_class(cls):
 		print("Setting up CLASS {0}".format(cls.__name__))
