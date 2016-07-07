@@ -1,3 +1,4 @@
+from __future__ import division
 from data_loader import DataLoader
 from ETL import ETL
 from datetime import datetime
@@ -27,6 +28,7 @@ class TestETL:
 		print("Setting up CLASS {0}".format(cls.__name__))
 		cls.d = DataLoader('dev.csv', '2009-01-01', '2016-06-30')
 		cls.d.load_stock_data()
+		cls.e = ETL(cls.d, 'GOOGL')
 
 
 	def test_avg_runup(self):
@@ -115,6 +117,28 @@ class TestETL:
 		assert np.abs(e2.df_temp.ix[datetime(2010, 8, 2), 'HAS_Vol_Momentum'] - (-78002300.0)) < 0.0001
 		assert np.abs(e2.df_temp.ix[datetime(2010, 8, 11), 'HAS_Vol_Momentum'] - (-63306800.0)) < 0.0001
 
-if __name__ == '__main__':
-	print("WAHAHA")
+	def test_vol_momentum_r1(self):
+		e1 = ETL(self.d, 'HBAN')
+		assert np.abs(e1.df_temp.ix[datetime(2010, 9, 10), 'HBAN_p_real1'] - 0)  < 0.0001
+		assert np.abs(e1.df_temp.ix[datetime(2010, 9, 13), 'HBAN_p_real1'] - 1)  < 0.0001
 
+		e2 = ETL(self.d, 'HCP')
+		assert np.abs(e2.df_temp.ix[datetime(2010, 8, 2), 'HCP_p_real1'] - 1) < 0.0001
+		assert np.abs(e2.df_temp.ix[datetime(2010, 8, 11), 'HCP_p_real1'] - 1) < 0.0001
+
+	def test_vol_momentum_r2(self):
+		e1 = ETL(self.d, 'HD')
+		assert np.abs(e1.df_temp.ix[datetime(2011, 1, 10), 'HD_p_real2'] - 0)  < 0.0001
+		assert np.abs(e1.df_temp.ix[datetime(2011, 1, 13), 'HD_p_real2'] - 0)  < 0.0001
+
+		e2 = ETL(self.d, 'HES')
+		assert np.abs(e2.df_temp.ix[datetime(2012, 11, 13), 'HES_p_real2'] - 0) < 0.0001
+		assert np.abs(e2.df_temp.ix[datetime(2012, 11, 15), 'HES_p_real2'] - 1) < 0.0001
+
+	def test_SR63d(self):
+		assert np.abs(self.e.df_temp.ix[datetime(2011, 1, 26), 'GOOGL_SR63d'] - 0.001164)  < 0.0001
+		assert np.abs(self.e.df_temp.ix[datetime(2011, 2, 14), 'GOOGL_SR63d'] - 0.059467)  < 0.0001
+
+	def test_STLFSI(self):
+		assert np.abs(self.e.df_temp.ix[datetime(2011, 1, 14), 'STLFSI'] - (-0.811))  < 0.0001
+		assert np.abs(self.e.df_temp.ix[datetime(2012, 11, 30), 'STLFSI'] - (-1.411))  < 0.0001

@@ -1,32 +1,5 @@
 from __future__ import division
-
-# Core
-import numpy as np
 import pandas as pd
-from datetime import date, datetime, timedelta
-
-# Data Visualization
-# %matplotlib inline
-import matplotlib.pyplot as plt
-from IPython.display import display
-
-# Supervised Learning
-from sklearn import grid_search
-from sklearn.metrics import r2_score
-from sklearn.linear_model import LinearRegression
-
-# Unsupervised Learning / PCA
-from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score
-from sklearn.decomposition import PCA
-
-# Misc
-from os import getcwd
-import operator
-from math import floor
-
-# Page Configuration
-pd.set_option('display.max_columns', 200)
 
 class DataLoader:
     """
@@ -35,8 +8,10 @@ class DataLoader:
 
     Data loaded by the DataLoader can then be further processed in an ETL object.
     """
-
+    # Load SPY data
     dfSPY = pd.read_csv('stock_data/SPY.csv', index_col='Date', parse_dates=True, usecols=['Date', 'Adj Close'], na_values = ['nan'])
+    # Load FSI data
+    dfFSI = pd.read_csv('STLFSI.csv', index_col='DATE', parse_dates=True, na_values = ['nan'])
 
     def __init__(self, target_stocks_csv, start_date_str, end_date_str):
         # Declare properties
@@ -63,6 +38,9 @@ class DataLoader:
 
         self.df_base = self.df_base.join(self.dfSPY)
         self.df_base = self.df_base.dropna()
+
+        self.df_base = self.df_base.join(self.dfFSI)
+        self.df_base['STLFSI'].fillna(method='ffill', inplace=True)
 
     def load_stock_data(self):
         for symbol in self.df_stock_names.loc[:, 'Symbol']:

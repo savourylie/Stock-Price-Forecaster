@@ -1,9 +1,6 @@
 from __future__ import division
 
-# Core
 import numpy as np
-import pandas as pd
-from datetime import date, datetime, timedelta
 
 class ETL:
 	def __init__(self, dataloader, symbol):
@@ -12,7 +9,6 @@ class ETL:
 
 		self.current_stock_name = symbol
 		self.df_temp = dataloader.stock_dict_original[symbol]
-
 
 		self._add_avg_runup()
 		self._add_daily_return()
@@ -23,6 +19,9 @@ class ETL:
 		self._add_sma()
 		self._add_sma_momentum()
 		self._add_vol_momentum()
+		self._add_momentum_r1()
+		self._add_momentum_r2()
+		self._add_SR63d()
 
 	def _add_avg_runup(self):
 		"""Make Average Run-up columns (252 days)
@@ -90,12 +89,26 @@ class ETL:
 
 	def _add_sma_momentum(self):
 		for symbol in self.symbols:
-		    self.df_temp[symbol + '_SMA_Momentum'] = (self.df_temp - self.df_temp.shift(1))[symbol + '_SMA']*(100 + 1)
+			self.df_temp[symbol + '_SMA_Momentum'] = (self.df_temp - self.df_temp.shift(1))[symbol + '_SMA']*(100 + 1)
 
 	def _add_vol_momentum(self):
 		self.df_temp[self.current_stock_name + '_Vol_Momentum'] = (self.df_temp - self.df_temp.shift(1))[self.current_stock_name + '_Vol']*(100 + 1)
 
+	def _add_momentum_r1(self):
+		self.df_temp[self.current_stock_name + '_p_real1'] = np.nan
+		self.df_temp.loc[self.df_temp[self.current_stock_name + '_Vol_Momentum'] >= 0, self.current_stock_name + '_p_real1'] = 1
+		self.df_temp.loc[self.df_temp[self.current_stock_name + '_Vol_Momentum'] < 0, self.current_stock_name + '_p_real1'] = 0
 
+	def _add_momentum_r2(self):
+		self.df_temp[self.current_stock_name + '_p_real2'] = np.nan
+		self.df_temp.loc[self.df_temp[self.current_stock_name + '_Vol'] >= (self.df_temp[self.current_stock_name + '_Vol'].mean() + self.df_temp[self.current_stock_name + '_Vol'].std()), self.current_stock_name + '_p_real2'] = 1
+		self.df_temp.loc[self.df_temp[self.current_stock_name + '_Vol'] < (self.df_temp[self.current_stock_name + '_Vol'].mean() + self.df_temp[self.current_stock_name + '_Vol'].std()), self.current_stock_name + '_p_real2'] = 0
 
+	def _add_momentum_r3(self): # To be implemented
+		pass
+
+	def _add_SR63d(self):
+		for symbol in self.symbols:
+			self.df_temp[symbol + '_SR63d'] = self.df_temp[symbol + '_return'].rolling(window=63, center=False).mean() / self.df_temp[symbol + '_Std63d']
 
 
