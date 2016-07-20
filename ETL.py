@@ -10,6 +10,7 @@ class ETL:
 		self.current_stock_name = symbol
 		self.df_temp = dataloader.stock_dict_original[symbol]
 
+		self._fill_missing_data()
 		self._add_avg_runup()
 		self._add_daily_return()
 		self._add_stock_mean_std63d()
@@ -22,6 +23,10 @@ class ETL:
 		self._add_momentum_r1()
 		self._add_momentum_r2()
 		self._add_SR63d()
+
+	def _fill_missing_data(self):
+		self.df_temp.fillna(method='ffill', inplace=True)
+		self.df_temp.fillna(method='bfill', inplace=True)
 
 	def _add_avg_runup(self):
 		"""Make Average Run-up columns (252 days)
