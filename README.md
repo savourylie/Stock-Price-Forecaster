@@ -1,13 +1,18 @@
-## Note
-The README file is here to document the softwares and Python libraries (version info included) used in this Capstone project.
-It is also necessary to include installation info.
+# Stock Price Forecaster README
+The data used in this project are listed below:
+* List of companies in S&P 500 (2009) - collected from http://siblisresearch.com/data/historical-components-sp-500/
+* S&P 500 stock price data - collected from https://finance.yahoo.com/
+* STLFSI data - collected from https://fred.stlouisfed.org/series/STLFSI/downloaddata
 
-## Deliverables
+The following libraries are used in this project:
+* Machine learning/Data Processing
+	* sklearn
+	* pandas
+	*  numpy
+* Data visualization
+	* matplotlib
+	* seaborn
+* Documentation
+	* Jupyter Notebook
 
-The following files should be included in your submission, and can be packaged as a single zip file for convenience:
-
-* A 9 - 15 page report in PDF addressing the five major project development phases.
-* All development code necessary for your solution in a clean, commented format.
-* Any required supporting files for your code (.csv datasets, input files, etc.).
-* If these files are too large, please instead reference appropriate download links in the README.
-* A README documenting the software and libraries used in your project, including any necessary instructions required to execute your code.
+The project is solely done in Python.
