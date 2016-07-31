@@ -15,4 +15,4 @@ The following libraries are used in this project:
 * Documentation
 	* Jupyter Notebook
 
-The project is solely done in Python.
+The project is solely done in Python. Please first extract the *stock_data.zip* file then code can be run straight from the Jupyter Notebook file *InvestmentnTrading.ipynb*.
