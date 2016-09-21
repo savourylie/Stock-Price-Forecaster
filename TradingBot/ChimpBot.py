@@ -1,13 +1,15 @@
+from sklearn.ensemble import RandomForestRegressor
+
 class ChimpBot(MonkeyBot):
 	"""An agent that learns to drive in the smartcab world."""
 	valid_actions = ['Buy', 'Sell', 'Hold']
 
     num_trial = 500
-
-    total_net_reward = 0 # For counting total reward
-    update_counter = 0 # For counting total steps
     trial_counter = 0 # For getting the trial number
-    random_rounds = 100
+    total_net_reward = 0 # For counting total reward
+
+
+    random_rounds = 100 # Number of rounds where the bot chooses to go monkey
 
     trial_meta_info = {} # For monitoring what happens in each trial
 
@@ -32,10 +34,27 @@ class ChimpBot(MonkeyBot):
 	    self.iter_env = self.env.iterrows()
 	    self.now_env_index, self.now_row = self.iter_env.next()
 
+        self.q_df_columns = list(self.env.columns)
+        self.q_df_columns.pop()
+        self.q_df_columns = self.q_df_columns.append('Q Value')
+        self.q_df = pd.DataFrame(columns=self.q_df_columns)
 	    self.q_dict = defaultdict(lambda: [0, 0]) # element of q_dict is (state, act): [q_value, t]
+
         self.net_reward = 0
-        self.num_step = 0 # Number of steps for each trial; get reset each time a new trial begins
-        self.state = ()
+
+        # Smartcab use only
+        # self.penalty = False
+        # self.num_step = 0 # Number of steps for each trial; get reset each time a new trial begins
+
+    def update_q_df(self):
+        for key, qAndT in q_dict.iteritems():
+            key_list = list(key)
+            key_list.append(qAndT[0])
+            dfTemp = pd.DataFrame(key_list)
+            self.q_df.append(dfTemp, ignore_index=True)
+
+    def train_on_q_df(self):
+        pass
 
     def max_q(self):
         # start = time.time()
@@ -169,7 +188,7 @@ class ChimpBot(MonkeyBot):
             key, qAndT = max(q_compare_dict.iteritems(), key=lambda x:x[1])
             return key[-1], qAndT[0], qAndT[1]
 
-    def q_update(self, now_states):
+    def q_update(self):
         q_temp = self.q_dict[(self.prev_states[0], \
         	self.prev_states[1], \
         	self.prev_states[2], \
@@ -296,19 +315,72 @@ class ChimpBot(MonkeyBot):
 	def policy(self):
         return self.max_q()[0]
 
-    def reset(self, destination=None):
-        self.planner.route_to(destination)
+    def reset(self):
+        self.cash = 1000
+        self.share = 0
+        self.pv = 0
 
-        if self.epsilon - 1/self.random_rounds > 0:
+        if self.epsilon - 1/self.random_rounds > 0.2: # Epislon threshold: 0.2
             self.random_counter += 1
             self.epsilon = self.epsilon - 1/self.random_rounds
         else:
-            self.epsilon = 0
+            self.epsilon = 0.2 # Epislon threshold: 0.2
             self.policy_counter += 1
 
         self.net_reward = 0
         self.num_step = 0 # Recalculate the steps for the new trial
         self.penalty = False
         self.fail = False
+
+    def update(self, t):
+        # Update state
+        now_states = self.now_row
+
+        # Exploitation-exploration decisioning
+        self.decision = np.random.choice(2, p = [self.epsilon, 1 - self.epsilon]) # decide to go random or with the policy
+        # self.decision = 0 # Force random mode
+
+        # print("random decision: {}".format(self.decision))
+        if self.decision == 0: # if zero, go random
+            action = random.choice(self.valid_actions)
+        else: # else go with the policy
+            action = self.policy()
+
+
+        # Execute action and get reward
+        if action == 'Buy':
+            self.buy(now_states[-1])
+        elif action == 'Sell':
+            self.sell(now_states[-1])
+        else:
+            self.hold()
+
+        try:
+            self.prev_states
+        except AttributeError:
+            print("Running the first time...no prevs exist.")
+        else:
+            reward = (self.cash - self.prev_cash) + (self.pv - self.prev)
+            self.q_update()
+
+        self.prev_states = now_states
+        self.prev_action = action
+        self.prev_reward = reward
+
+        try:
+            self.now_env_index, self.now_row = self.iter_env.next()
+        except StopIteration:
+            print("End of data. Start again.")
+        else:
+            pass
+
+        self.net_reward += reward
+
+        # if reward < 0:
+        #     self.penalty = True
+
+        self.total_net_reward += reward
+
+        print "ChimpBot.update(): Action: {0} at Price: {1}, Cash + PV = {2}, Reward = {3}".format(action, now_states[-1], self.cash + self.pv, reward)  # [debug]
 
 
