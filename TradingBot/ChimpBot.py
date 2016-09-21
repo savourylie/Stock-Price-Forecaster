@@ -36,7 +36,7 @@ class ChimpBot(MonkeyBot):
 
         self.q_df_columns = list(self.env.columns)
         self.q_df_columns.pop()
-        self.q_df_columns = self.q_df_columns.append('Q Value')
+        self.q_df_columns.append('Q Value')
         self.q_df = pd.DataFrame(columns=self.q_df_columns)
 	    self.q_dict = defaultdict(lambda: [0, 0]) # element of q_dict is (state, act): [q_value, t]
 
@@ -47,14 +47,24 @@ class ChimpBot(MonkeyBot):
         # self.num_step = 0 # Number of steps for each trial; get reset each time a new trial begins
 
     def update_q_df(self):
+        self.q_df = pd.DataFrame(columns=self.q_df_columns)
+
         for key, qAndT in q_dict.iteritems():
             key_list = list(key)
             key_list.append(qAndT[0])
             dfTemp = pd.DataFrame(key_list)
-            self.q_df.append(dfTemp, ignore_index=True)
+            self.q_df = self.q_df.append(dfTemp, ignore_index=True)
+
+        self.split_q_df()
+
+    def split_q_df(self):
+        self.q_df_train = self.q_df.ix[:, :-1]
+        self.q_df_test = self.q_df.ix[:, -1]
 
     def train_on_q_df(self):
-        pass
+        self.q_reg = RandomForestRegressor(n_estimators=64)
+        self.q_reg = self.q_reg.fit(self.q_df_train, self.q_df_test)
+
 
     def max_q(self):
         # start = time.time()
@@ -101,6 +111,89 @@ class ChimpBot(MonkeyBot):
             	self.now_row[35], \
             	self.now_row[36], \
             	act)]
+
+            if np.random.choice(2, p = [0.5, 1 - 0.5]) == 0 and len(self.q_dict) > 5000:
+                test_X = list(self.now_row[:36])
+                test_X.append(act)
+                pred_q = self.q_reg.predict(test_X.reshape(1, -1))
+
+                self.q_dict[(self.now_row[0], \
+                self.now_row[1], \
+                self.now_row[2], \
+                self.now_row[3], \
+                self.now_row[4], \
+                self.now_row[5], \
+                self.now_row[6], \
+                self.now_row[7], \
+                self.now_row[8], \
+                self.now_row[9], \
+                self.now_row[10], \
+                self.now_row[11], \
+                self.now_row[12], \
+                self.now_row[13], \
+                self.now_row[14], \
+                self.now_row[15], \
+                self.now_row[16], \
+                self.now_row[17], \
+                self.now_row[18], \
+                self.now_row[19], \
+                self.now_row[20], \
+                self.now_row[21], \
+                self.now_row[22], \
+                self.now_row[23], \
+                self.now_row[24], \
+                self.now_row[25], \
+                self.now_row[26], \
+                self.now_row[27], \
+                self.now_row[28], \
+                self.now_row[29], \
+                self.now_row[30], \
+                self.now_row[31], \
+                self.now_row[32], \
+                self.now_row[33], \
+                self.now_row[34], \
+                self.now_row[35], \
+                self.now_row[36], \
+                act)] \
+
+                = (pred_q, self.q_dict[(self.now_row[0], \
+                self.now_row[1], \
+                self.now_row[2], \
+                self.now_row[3], \
+                self.now_row[4], \
+                self.now_row[5], \
+                self.now_row[6], \
+                self.now_row[7], \
+                self.now_row[8], \
+                self.now_row[9], \
+                self.now_row[10], \
+                self.now_row[11], \
+                self.now_row[12], \
+                self.now_row[13], \
+                self.now_row[14], \
+                self.now_row[15], \
+                self.now_row[16], \
+                self.now_row[17], \
+                self.now_row[18], \
+                self.now_row[19], \
+                self.now_row[20], \
+                self.now_row[21], \
+                self.now_row[22], \
+                self.now_row[23], \
+                self.now_row[24], \
+                self.now_row[25], \
+                self.now_row[26], \
+                self.now_row[27], \
+                self.now_row[28], \
+                self.now_row[29], \
+                self.now_row[30], \
+                self.now_row[31], \
+                self.now_row[32], \
+                self.now_row[33], \
+                self.now_row[34], \
+                self.now_row[35], \
+                self.now_row[36], \
+                act)][1] + 1)
 
             q_compare_dict[(self.now_row[0], \
             	self.now_row[1], \
