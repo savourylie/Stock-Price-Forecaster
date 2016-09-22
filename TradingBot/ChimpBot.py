@@ -10,9 +10,8 @@ import random
 from sklearn.ensemble import RandomForestRegressor
 
 class ChimpBot(MonkeyBot):
-	"""An agent that learns to drive in the smartcab world."""
-	valid_actions = ['Buy', 'Sell', 'Hold']
-
+    """An agent that learns to drive in the smartcab world."""
+    valid_actions = ['Buy', 'Sell', 'Hold']
     num_trial = 500
     trial_counter = 0 # For getting the trial number
     total_net_reward = 0 # For counting total reward
@@ -30,24 +29,24 @@ class ChimpBot(MonkeyBot):
     policy_counter = 0
 
     def __init__(self, dfEnv):
-	    super(ChimpBot, self).__init__(dfEnv)
-	    # sets self.cash = 1000
-	    # sets self.share = 0
-	    # sets self.pv = 0
-	    # sets self.pv_history_list = []
-	    # sets self.env = dfEnv
-	    # implements buy(self, stock_price)
-	    # implements sell(self, stock_price)
-	    # implements hold(self)
+        super(ChimpBot, self).__init__(dfEnv)
+        # sets self.cash = 1000
+        # sets self.share = 0
+        # sets self.pv = 0
+        # sets self.pv_history_list = []
+        # sets self.env = dfEnv
+        # implements buy(self, stock_price)
+        # implements sell(self, stock_price)
+        # implements hold(self)
 
-	    self.iter_env = self.env.iterrows()
-	    self.now_env_index, self.now_row = self.iter_env.next()
+        self.iter_env = self.env.iterrows()
+        self.now_env_index, self.now_row = self.iter_env.next()
 
         self.q_df_columns = list(self.env.columns)
         self.q_df_columns.pop()
         self.q_df_columns.append('Q Value')
         self.q_df = pd.DataFrame(columns=self.q_df_columns)
-	    self.q_dict = defaultdict(lambda: [0, 0]) # element of q_dict is (state, act): [q_value, t]
+        self.q_dict = defaultdict(lambda: [0, 0]) # element of q_dict is (state, act): [q_value, t]
 
         self.net_reward = 0
 
@@ -83,43 +82,43 @@ class ChimpBot(MonkeyBot):
         # Populate the q_dict
         for act in set(self.valid_actions):
             _ = self.q_dict[(self.now_row[0], \
-            	self.now_row[1], \
-            	self.now_row[2], \
-            	self.now_row[3], \
-            	self.now_row[4], \
-            	self.now_row[5], \
-            	self.now_row[6], \
-            	self.now_row[7], \
-            	self.now_row[8], \
-            	self.now_row[9], \
-            	self.now_row[10], \
-            	self.now_row[11], \
-            	self.now_row[12], \
-            	self.now_row[13], \
-            	self.now_row[14], \
-            	self.now_row[15], \
-            	self.now_row[16], \
-            	self.now_row[17], \
-            	self.now_row[18], \
-            	self.now_row[19], \
-            	self.now_row[20], \
-            	self.now_row[21], \
-            	self.now_row[22], \
-            	self.now_row[23], \
-            	self.now_row[24], \
-            	self.now_row[25], \
-            	self.now_row[26], \
-            	self.now_row[27], \
-            	self.now_row[28], \
-            	self.now_row[29], \
-            	self.now_row[30], \
-            	self.now_row[31], \
-            	self.now_row[32], \
-            	self.now_row[33], \
-            	self.now_row[34], \
-            	self.now_row[35], \
-            	self.now_row[36], \
-            	act)]
+                self.now_row[1], \
+                self.now_row[2], \
+                self.now_row[3], \
+                self.now_row[4], \
+                self.now_row[5], \
+                self.now_row[6], \
+                self.now_row[7], \
+                self.now_row[8], \
+                self.now_row[9], \
+                self.now_row[10], \
+                self.now_row[11], \
+                self.now_row[12], \
+                self.now_row[13], \
+                self.now_row[14], \
+                self.now_row[15], \
+                self.now_row[16], \
+                self.now_row[17], \
+                self.now_row[18], \
+                self.now_row[19], \
+                self.now_row[20], \
+                self.now_row[21], \
+                self.now_row[22], \
+                self.now_row[23], \
+                self.now_row[24], \
+                self.now_row[25], \
+                self.now_row[26], \
+                self.now_row[27], \
+                self.now_row[28], \
+                self.now_row[29], \
+                self.now_row[30], \
+                self.now_row[31], \
+                self.now_row[32], \
+                self.now_row[33], \
+                self.now_row[34], \
+                self.now_row[35], \
+                self.now_row[36], \
+                act)]
 
             if np.random.choice(2, p = [0.5, 1 - 0.5]) == 0 and len(self.q_dict) > 5000:
                 test_X = list(self.now_row[:36])
@@ -164,7 +163,6 @@ class ChimpBot(MonkeyBot):
                 self.now_row[35], \
                 self.now_row[36], \
                 act)] \
-
                 = (pred_q, self.q_dict[(self.now_row[0], \
                 self.now_row[1], \
                 self.now_row[2], \
@@ -205,82 +203,81 @@ class ChimpBot(MonkeyBot):
                 act)][1] + 1)
 
             q_compare_dict[(self.now_row[0], \
-            	self.now_row[1], \
-            	self.now_row[2], \
-            	self.now_row[3], \
-            	self.now_row[4], \
-            	self.now_row[5], \
-            	self.now_row[6], \
-            	self.now_row[7], \
-            	self.now_row[8], \
-            	self.now_row[9], \
-            	self.now_row[10], \
-            	self.now_row[11], \
-            	self.now_row[12], \
-            	self.now_row[13], \
-            	self.now_row[14], \
-            	self.now_row[15], \
-            	self.now_row[16], \
-            	self.now_row[17], \
-            	self.now_row[18], \
-            	self.now_row[19], \
-            	self.now_row[20], \
-            	self.now_row[21], \
-            	self.now_row[22], \
-            	self.now_row[23], \
-            	self.now_row[24], \
-            	self.now_row[25], \
-            	self.now_row[26], \
-            	self.now_row[27], \
-            	self.now_row[28], \
-            	self.now_row[29], \
-            	self.now_row[30], \
-            	self.now_row[31], \
-            	self.now_row[32], \
-            	self.now_row[33], \
-            	self.now_row[34], \
-            	self.now_row[35], \
-            	self.now_row[36], \
-            	act)] \
-
+            self.now_row[1], \
+            self.now_row[2], \
+            self.now_row[3], \
+            self.now_row[4], \
+            self.now_row[5], \
+            self.now_row[6], \
+            self.now_row[7], \
+            self.now_row[8], \
+            self.now_row[9], \
+            self.now_row[10], \
+            self.now_row[11], \
+            self.now_row[12], \
+            self.now_row[13], \
+            self.now_row[14], \
+            self.now_row[15], \
+            self.now_row[16], \
+            self.now_row[17], \
+            self.now_row[18], \
+            self.now_row[19], \
+            self.now_row[20], \
+            self.now_row[21], \
+            self.now_row[22], \
+            self.now_row[23], \
+            self.now_row[24], \
+            self.now_row[25], \
+            self.now_row[26], \
+            self.now_row[27], \
+            self.now_row[28], \
+            self.now_row[29], \
+            self.now_row[30], \
+            self.now_row[31], \
+            self.now_row[32], \
+            self.now_row[33], \
+            self.now_row[34], \
+            self.now_row[35], \
+            self.now_row[36], \
+            act)] \
             = self.q_dict[(self.now_row[0], \
-            	self.now_row[1], \
-            	self.now_row[2], \
-            	self.now_row[3], \
-            	self.now_row[4], \
-            	self.now_row[5], \
-            	self.now_row[6], \
-            	self.now_row[7], \
-            	self.now_row[8], \
-            	self.now_row[9], \
-            	self.now_row[10], \
-            	self.now_row[11], \
-            	self.now_row[12], \
-            	self.now_row[13], \
-            	self.now_row[14], \
-            	self.now_row[15], \
-            	self.now_row[16], \
-            	self.now_row[17], \
-            	self.now_row[18], \
-            	self.now_row[19], \
-            	self.now_row[20], \
-            	self.now_row[21], \
-            	self.now_row[22], \
-            	self.now_row[23], \
-            	self.now_row[24], \
-            	self.now_row[25], \
-            	self.now_row[26], \
-            	self.now_row[27], \
-            	self.now_row[28], \
-            	self.now_row[29], \
-            	self.now_row[30], \
-            	self.now_row[31], \
-            	self.now_row[32], \
-            	self.now_row[33], \
-            	self.now_row[34], \
-            	self.now_row[35], \
-            	self.now_row[36], \
-            	act)]
+            self.now_row[1], \
+            self.now_row[2], \
+            self.now_row[3], \
+            self.now_row[4], \
+            self.now_row[5], \
+            self.now_row[6], \
+            self.now_row[7], \
+            self.now_row[8], \
+            self.now_row[9], \
+            self.now_row[10], \
+            self.now_row[11], \
+            self.now_row[12], \
+            self.now_row[13], \
+            self.now_row[14], \
+            self.now_row[15], \
+            self.now_row[16], \
+            self.now_row[17], \
+            self.now_row[18], \
+            self.now_row[19], \
+            self.now_row[20], \
+            self.now_row[21], \
+            self.now_row[22], \
+            self.now_row[23], \
+            self.now_row[24], \
+            self.now_row[25], \
+            self.now_row[26], \
+            self.now_row[27], \
+            self.now_row[28], \
+            self.now_row[29], \
+            self.now_row[30], \
+            self.now_row[31], \
+            self.now_row[32], \
+            self.now_row[33], \
+            self.now_row[34], \
+            self.now_row[35], \
+            self.now_row[36], \
+            act)]
 
         try:
             max(q_compare_dict.iteritems(), key=lambda x:x[1])
@@ -292,129 +289,129 @@ class ChimpBot(MonkeyBot):
 
     def q_update(self):
         q_temp = self.q_dict[(self.prev_states[0], \
-        	self.prev_states[1], \
-        	self.prev_states[2], \
-        	self.prev_states[3], \
-        	self.prev_states[4], \
-        	self.prev_states[5], \
-        	self.prev_states[6], \
-        	self.prev_states[7], \
-        	self.prev_states[8], \
-        	self.prev_states[9], \
-        	self.prev_states[10], \
-        	self.prev_states[11], \
-        	self.prev_states[12], \
-        	self.prev_states[13], \
-        	self.prev_states[14], \
-        	self.prev_states[15], \
-        	self.prev_states[16], \
-        	self.prev_states[17], \
-        	self.prev_states[18], \
-        	self.prev_states[19], \
-        	self.prev_states[20], \
-        	self.prev_states[21], \
-        	self.prev_states[22], \
-        	self.prev_states[23], \
-        	self.prev_states[24], \
-        	self.prev_states[25], \
-        	self.prev_states[26], \
-        	self.prev_states[27], \
-        	self.prev_states[28], \
-        	self.prev_states[29], \
-        	self.prev_states[30], \
-        	self.prev_states[31], \
-        	self.prev_states[32], \
-        	self.prev_states[33], \
-        	self.prev_states[34], \
-        	self.prev_states[35], \
-        	self.prev_states[36], \
-        	self.prev_states[37], \
-        	self.prev_action)]
+            self.prev_states[1], \
+            self.prev_states[2], \
+            self.prev_states[3], \
+            self.prev_states[4], \
+            self.prev_states[5], \
+            self.prev_states[6], \
+            self.prev_states[7], \
+            self.prev_states[8], \
+            self.prev_states[9], \
+            self.prev_states[10], \
+            self.prev_states[11], \
+            self.prev_states[12], \
+            self.prev_states[13], \
+            self.prev_states[14], \
+            self.prev_states[15], \
+            self.prev_states[16], \
+            self.prev_states[17], \
+            self.prev_states[18], \
+            self.prev_states[19], \
+            self.prev_states[20], \
+            self.prev_states[21], \
+            self.prev_states[22], \
+            self.prev_states[23], \
+            self.prev_states[24], \
+            self.prev_states[25], \
+            self.prev_states[26], \
+            self.prev_states[27], \
+            self.prev_states[28], \
+            self.prev_states[29], \
+            self.prev_states[30], \
+            self.prev_states[31], \
+            self.prev_states[32], \
+            self.prev_states[33], \
+            self.prev_states[34], \
+            self.prev_states[35], \
+            self.prev_states[36], \
+            self.prev_states[37], \
+            self.prev_action)]
 
         q_temp0 = (1 - (1 / (q_temp[1] + 1))) * q_temp[0] + (1 / (q_temp[1] + 1)) * (self.prev_reward + self.gamma * self.max_q()[1])
 
         self.q_dict[(self.prev_states[0], \
-        	self.prev_states[1], \
-        	self.prev_states[2], \
-        	self.prev_states[3], \
-        	self.prev_states[4], \
-        	self.prev_states[5], \
-        	self.prev_states[6], \
-        	self.prev_states[7], \
-        	self.prev_states[8], \
-        	self.prev_states[9], \
-        	self.prev_states[10], \
-        	self.prev_states[11], \
-        	self.prev_states[12], \
-        	self.prev_states[13], \
-        	self.prev_states[14], \
-        	self.prev_states[15], \
-        	self.prev_states[16], \
-        	self.prev_states[17], \
-        	self.prev_states[18], \
-        	self.prev_states[19], \
-        	self.prev_states[20], \
-        	self.prev_states[21], \
-        	self.prev_states[22], \
-        	self.prev_states[23], \
-        	self.prev_states[24], \
-        	self.prev_states[25], \
-        	self.prev_states[26], \
-        	self.prev_states[27], \
-        	self.prev_states[28], \
-        	self.prev_states[29], \
-        	self.prev_states[30], \
-        	self.prev_states[31], \
-        	self.prev_states[32], \
-        	self.prev_states[33], \
-        	self.prev_states[34], \
-        	self.prev_states[35], \
-        	self.prev_states[36], \
-        	self.prev_states[37], \
-        	self.prev_action)] \
-        	= (q_temp0, q_temp[1] + 1)
+            self.prev_states[1], \
+            self.prev_states[2], \
+            self.prev_states[3], \
+            self.prev_states[4], \
+            self.prev_states[5], \
+            self.prev_states[6], \
+            self.prev_states[7], \
+            self.prev_states[8], \
+            self.prev_states[9], \
+            self.prev_states[10], \
+            self.prev_states[11], \
+            self.prev_states[12], \
+            self.prev_states[13], \
+            self.prev_states[14], \
+            self.prev_states[15], \
+            self.prev_states[16], \
+            self.prev_states[17], \
+            self.prev_states[18], \
+            self.prev_states[19], \
+            self.prev_states[20], \
+            self.prev_states[21], \
+            self.prev_states[22], \
+            self.prev_states[23], \
+            self.prev_states[24], \
+            self.prev_states[25], \
+            self.prev_states[26], \
+            self.prev_states[27], \
+            self.prev_states[28], \
+            self.prev_states[29], \
+            self.prev_states[30], \
+            self.prev_states[31], \
+            self.prev_states[32], \
+            self.prev_states[33], \
+            self.prev_states[34], \
+            self.prev_states[35], \
+            self.prev_states[36], \
+            self.prev_states[37], \
+            self.prev_action)] \
+            = (q_temp0, q_temp[1] + 1)
 
         return ([(self.prev_states[0], \
-        	self.prev_states[1], \
-        	self.prev_states[2], \
-        	self.prev_states[3], \
-        	self.prev_states[4], \
-        	self.prev_states[5], \
-        	self.prev_states[6], \
-        	self.prev_states[7], \
-        	self.prev_states[8], \
-        	self.prev_states[9], \
-        	self.prev_states[10], \
-        	self.prev_states[11], \
-        	self.prev_states[12], \
-        	self.prev_states[13], \
-        	self.prev_states[14], \
-        	self.prev_states[15], \
-        	self.prev_states[16], \
-        	self.prev_states[17], \
-        	self.prev_states[18], \
-        	self.prev_states[19], \
-        	self.prev_states[20], \
-        	self.prev_states[21], \
-        	self.prev_states[22], \
-        	self.prev_states[23], \
-        	self.prev_states[24], \
-        	self.prev_states[25], \
-        	self.prev_states[26], \
-        	self.prev_states[27], \
-        	self.prev_states[28], \
-        	self.prev_states[29], \
-        	self.prev_states[30], \
-        	self.prev_states[31], \
-        	self.prev_states[32], \
-        	self.prev_states[33], \
-        	self.prev_states[34], \
-        	self.prev_states[35], \
-        	self.prev_states[36], \
-        	self.prev_states[37], \
-        	self.prev_action)])
+            self.prev_states[1], \
+            self.prev_states[2], \
+            self.prev_states[3], \
+            self.prev_states[4], \
+            self.prev_states[5], \
+            self.prev_states[6], \
+            self.prev_states[7], \
+            self.prev_states[8], \
+            self.prev_states[9], \
+            self.prev_states[10], \
+            self.prev_states[11], \
+            self.prev_states[12], \
+            self.prev_states[13], \
+            self.prev_states[14], \
+            self.prev_states[15], \
+            self.prev_states[16], \
+            self.prev_states[17], \
+            self.prev_states[18], \
+            self.prev_states[19], \
+            self.prev_states[20], \
+            self.prev_states[21], \
+            self.prev_states[22], \
+            self.prev_states[23], \
+            self.prev_states[24], \
+            self.prev_states[25], \
+            self.prev_states[26], \
+            self.prev_states[27], \
+            self.prev_states[28], \
+            self.prev_states[29], \
+            self.prev_states[30], \
+            self.prev_states[31], \
+            self.prev_states[32], \
+            self.prev_states[33], \
+            self.prev_states[34], \
+            self.prev_states[35], \
+            self.prev_states[36], \
+            self.prev_states[37], \
+            self.prev_action)])
 
-	def policy(self):
+    def policy(self):
         return self.max_q()[0]
 
     def reset(self):
@@ -455,7 +452,7 @@ class ChimpBot(MonkeyBot):
         elif action == 'Sell':
             self.sell(now_states[-1])
         else:
-            self.hold()
+            self.hold(now_states[-1])
 
         try:
             self.prev_states
