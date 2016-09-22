@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from numbers import Number
 import types
+from datetime import datetime, timedelta
 
 # Test failing due to the newly added ETL process and change of gamma.
 
@@ -125,6 +126,24 @@ class TestChimp:
 	def test_iter_env_type(self):
 		assert isinstance(self.chimp.iter_env, types.GeneratorType)
 
+
+	def test_iter_env_index(self):
+		assert self.chimp.now_env_index == datetime(1993, 6, 23)
+		self.chimp.now_env_index, self.chimp.now_row = self.chimp.iter_env.next()
+		assert self.chimp.now_env_index == datetime(1993, 6, 24)
+		self.chimp.now_env_index, self.chimp.now_row = self.chimp.iter_env.next()
+		self.chimp.now_env_index, self.chimp.now_row = self.chimp.iter_env.next()
+		assert self.chimp.now_env_index == datetime(1993, 6, 28)
+
+	def test_iter_env_row(self):
+		assert self.chimp.now_row[0] == 3
+		self.chimp.now_env_index, self.chimp.now_row = self.chimp.iter_env.next()
+		assert self.chimp.now_row[13] == -1
+		self.chimp.now_env_index, self.chimp.now_row = self.chimp.iter_env.next()
+		self.chimp.now_env_index, self.chimp.now_row = self.chimp.iter_env.next()
+		self.chimp.now_env_index, self.chimp.now_row = self.chimp.iter_env.next()
+		assert self.chimp.now_row[2] == 5
+		assert np.abs(self.chimp.now_row[-1] -  29.407375) < 0.0001
 
 
 
