@@ -3,6 +3,7 @@ from chimpbot import ChimpBot
 import numpy as np
 import pandas as pd
 from numbers import Number
+import types
 
 # Test failing due to the newly added ETL process and change of gamma.
 
@@ -120,3 +121,11 @@ class TestChimp:
 		assert np.abs(self.chimp.cash - 1000) < 0.0001
 		assert np.abs(self.chimp.share - 0) < 0.0001
 		assert np.abs(self.chimp.pv - 0) < 0.0001
+
+
+	def test_iter_env(self):
+		assert isinstance(self.chimp.iter_env, types.GeneratorType)
+
+
+
+
