@@ -1,6 +1,6 @@
 import random
 
-class MonkeyBot:
+class MonkeyBot(object):
     def __init__(self, dfEnv):
         self.cash = 1000
         self.share = 0

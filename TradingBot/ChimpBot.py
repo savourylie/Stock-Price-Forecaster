@@ -2,6 +2,7 @@ from __future__ import division
 
 from monkeybot import MonkeyBot
 
+from collections import defaultdict
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
