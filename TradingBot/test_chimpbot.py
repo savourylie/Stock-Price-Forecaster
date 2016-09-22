@@ -122,8 +122,7 @@ class TestChimp:
 		assert np.abs(self.chimp.share - 0) < 0.0001
 		assert np.abs(self.chimp.pv - 0) < 0.0001
 
-
-	def test_iter_env(self):
+	def test_iter_env_type(self):
 		assert isinstance(self.chimp.iter_env, types.GeneratorType)
 
 
