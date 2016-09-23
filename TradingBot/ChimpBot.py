@@ -45,7 +45,7 @@ class ChimpBot(MonkeyBot):
 
         self.q_df_columns = list(self.env.columns)
         self.q_df_columns.pop()
-        self.q_df_columns.append('Q Value')
+        self.q_df_columns.extend(['Yes Share', 'Action', 'Q Value'])
         self.q_df = pd.DataFrame(columns=self.q_df_columns)
         self.q_dict = defaultdict(lambda: [0, 0]) # element of q_dict is (state, act): [q_value, t]
 
@@ -55,230 +55,153 @@ class ChimpBot(MonkeyBot):
         # self.penalty = False
         # self.num_step = 0 # Number of steps for each trial; get reset each time a new trial begins
 
-    def update_q_df(self):
+    def make_q_df(self):
         self.q_df = pd.DataFrame(columns=self.q_df_columns)
-
-        for key, qAndT in q_dict.iteritems():
+        for key, qAndT in self.q_dict.iteritems():
             key_list = list(key)
             key_list.append(qAndT[0])
-            dfTemp = pd.DataFrame(key_list)
+            dfTemp = pd.DataFrame([key_list], columns=self.q_df_columns)
             self.q_df = self.q_df.append(dfTemp, ignore_index=True)
 
-        self.split_q_df()
+        def actions_to_ints(string):
+            if string == 'Hold':
+                return 0
+            elif string == 'Buy':
+                return 1
+            elif string == 'Sell':
+                return 2
+            else:
+                raise ValueError('Wrong action man!')
+
+        self.q_df['Action'] = self.q_df['Action'].apply(actions_to_ints)
 
     def split_q_df(self):
         self.q_df_train = self.q_df.ix[:, :-1]
         self.q_df_test = self.q_df.ix[:, -1]
 
+    def update_q_df(self):
+        self.make_q_df()
+        self.split_q_df()
+
     def train_on_q_df(self):
         self.q_reg = RandomForestRegressor(n_estimators=64)
         self.q_reg = self.q_reg.fit(self.q_df_train, self.q_df_test)
 
+    def from_state_action_predict_q(self, state_action):
+        state_action = [state_action]
 
-    def max_q(self):
-        # start = time.time()
+        pred_q = self.q_reg.predict(state_action)
+
+        return pred_q
+
+    def yes_share(self):
+        # Represent chimp asset in state_action
+        if self.share > 0:
+            return 1
+        else:
+            return 0
+
+    def max_q(self, now_row):
+        now_row = list(now_row)
+        now_row.pop() # disregard the Trade Price
+        print(now_row)
+        now_row.append(self.yes_share())
         max_q = ''
         q_compare_dict = {}
 
         # Populate the q_dict
         for act in set(self.valid_actions):
-            _ = self.q_dict[(self.now_row[0], \
-                self.now_row[1], \
-                self.now_row[2], \
-                self.now_row[3], \
-                self.now_row[4], \
-                self.now_row[5], \
-                self.now_row[6], \
-                self.now_row[7], \
-                self.now_row[8], \
-                self.now_row[9], \
-                self.now_row[10], \
-                self.now_row[11], \
-                self.now_row[12], \
-                self.now_row[13], \
-                self.now_row[14], \
-                self.now_row[15], \
-                self.now_row[16], \
-                self.now_row[17], \
-                self.now_row[18], \
-                self.now_row[19], \
-                self.now_row[20], \
-                self.now_row[21], \
-                self.now_row[22], \
-                self.now_row[23], \
-                self.now_row[24], \
-                self.now_row[25], \
-                self.now_row[26], \
-                self.now_row[27], \
-                self.now_row[28], \
-                self.now_row[29], \
-                self.now_row[30], \
-                self.now_row[31], \
-                self.now_row[32], \
-                self.now_row[33], \
-                self.now_row[34], \
-                self.now_row[35], \
-                self.now_row[36], \
-                act)]
+            now_row.append(act)
 
-            if np.random.choice(2, p = [0.5, 1 - 0.5]) == 0 and len(self.q_dict) > 5000:
-                test_X = list(self.now_row[:36])
-                test_X.append(act)
-                pred_q = self.q_reg.predict(test_X.reshape(1, -1))
+            _ = self.q_dict[tuple(now_row)]
 
-                self.q_dict[(self.now_row[0], \
-                self.now_row[1], \
-                self.now_row[2], \
-                self.now_row[3], \
-                self.now_row[4], \
-                self.now_row[5], \
-                self.now_row[6], \
-                self.now_row[7], \
-                self.now_row[8], \
-                self.now_row[9], \
-                self.now_row[10], \
-                self.now_row[11], \
-                self.now_row[12], \
-                self.now_row[13], \
-                self.now_row[14], \
-                self.now_row[15], \
-                self.now_row[16], \
-                self.now_row[17], \
-                self.now_row[18], \
-                self.now_row[19], \
-                self.now_row[20], \
-                self.now_row[21], \
-                self.now_row[22], \
-                self.now_row[23], \
-                self.now_row[24], \
-                self.now_row[25], \
-                self.now_row[26], \
-                self.now_row[27], \
-                self.now_row[28], \
-                self.now_row[29], \
-                self.now_row[30], \
-                self.now_row[31], \
-                self.now_row[32], \
-                self.now_row[33], \
-                self.now_row[34], \
-                self.now_row[35], \
-                self.now_row[36], \
-                act)] \
-                = (pred_q, self.q_dict[(self.now_row[0], \
-                self.now_row[1], \
-                self.now_row[2], \
-                self.now_row[3], \
-                self.now_row[4], \
-                self.now_row[5], \
-                self.now_row[6], \
-                self.now_row[7], \
-                self.now_row[8], \
-                self.now_row[9], \
-                self.now_row[10], \
-                self.now_row[11], \
-                self.now_row[12], \
-                self.now_row[13], \
-                self.now_row[14], \
-                self.now_row[15], \
-                self.now_row[16], \
-                self.now_row[17], \
-                self.now_row[18], \
-                self.now_row[19], \
-                self.now_row[20], \
-                self.now_row[21], \
-                self.now_row[22], \
-                self.now_row[23], \
-                self.now_row[24], \
-                self.now_row[25], \
-                self.now_row[26], \
-                self.now_row[27], \
-                self.now_row[28], \
-                self.now_row[29], \
-                self.now_row[30], \
-                self.now_row[31], \
-                self.now_row[32], \
-                self.now_row[33], \
-                self.now_row[34], \
-                self.now_row[35], \
-                self.now_row[36], \
-                act)][1] + 1)
+            print(_)
 
-            q_compare_dict[(self.now_row[0], \
-            self.now_row[1], \
-            self.now_row[2], \
-            self.now_row[3], \
-            self.now_row[4], \
-            self.now_row[5], \
-            self.now_row[6], \
-            self.now_row[7], \
-            self.now_row[8], \
-            self.now_row[9], \
-            self.now_row[10], \
-            self.now_row[11], \
-            self.now_row[12], \
-            self.now_row[13], \
-            self.now_row[14], \
-            self.now_row[15], \
-            self.now_row[16], \
-            self.now_row[17], \
-            self.now_row[18], \
-            self.now_row[19], \
-            self.now_row[20], \
-            self.now_row[21], \
-            self.now_row[22], \
-            self.now_row[23], \
-            self.now_row[24], \
-            self.now_row[25], \
-            self.now_row[26], \
-            self.now_row[27], \
-            self.now_row[28], \
-            self.now_row[29], \
-            self.now_row[30], \
-            self.now_row[31], \
-            self.now_row[32], \
-            self.now_row[33], \
-            self.now_row[34], \
-            self.now_row[35], \
-            self.now_row[36], \
-            act)] \
-            = self.q_dict[(self.now_row[0], \
-            self.now_row[1], \
-            self.now_row[2], \
-            self.now_row[3], \
-            self.now_row[4], \
-            self.now_row[5], \
-            self.now_row[6], \
-            self.now_row[7], \
-            self.now_row[8], \
-            self.now_row[9], \
-            self.now_row[10], \
-            self.now_row[11], \
-            self.now_row[12], \
-            self.now_row[13], \
-            self.now_row[14], \
-            self.now_row[15], \
-            self.now_row[16], \
-            self.now_row[17], \
-            self.now_row[18], \
-            self.now_row[19], \
-            self.now_row[20], \
-            self.now_row[21], \
-            self.now_row[22], \
-            self.now_row[23], \
-            self.now_row[24], \
-            self.now_row[25], \
-            self.now_row[26], \
-            self.now_row[27], \
-            self.now_row[28], \
-            self.now_row[29], \
-            self.now_row[30], \
-            self.now_row[31], \
-            self.now_row[32], \
-            self.now_row[33], \
-            self.now_row[34], \
-            self.now_row[35], \
-            self.now_row[36], \
-            act)]
+            # # Ensenble-Q Algorithm
+            # if np.random.choice(2, p = [0.5, 1 - 0.5]) == 0 and len(self.q_dict) > 5000:
+            #     test_X = list(self.now_row[:36])
+            #     test_X.append(act)
+            #     pred_q = self.q_reg.predict(test_X.reshape(1, -1))
+
+            #     self.q_dict[(self.now_row[0], \
+            #     self.now_row[1], \
+            #     self.now_row[2], \
+            #     self.now_row[3], \
+            #     self.now_row[4], \
+            #     self.now_row[5], \
+            #     self.now_row[6], \
+            #     self.now_row[7], \
+            #     self.now_row[8], \
+            #     self.now_row[9], \
+            #     self.now_row[10], \
+            #     self.now_row[11], \
+            #     self.now_row[12], \
+            #     self.now_row[13], \
+            #     self.now_row[14], \
+            #     self.now_row[15], \
+            #     self.now_row[16], \
+            #     self.now_row[17], \
+            #     self.now_row[18], \
+            #     self.now_row[19], \
+            #     self.now_row[20], \
+            #     self.now_row[21], \
+            #     self.now_row[22], \
+            #     self.now_row[23], \
+            #     self.now_row[24], \
+            #     self.now_row[25], \
+            #     self.now_row[26], \
+            #     self.now_row[27], \
+            #     self.now_row[28], \
+            #     self.now_row[29], \
+            #     self.now_row[30], \
+            #     self.now_row[31], \
+            #     self.now_row[32], \
+            #     self.now_row[33], \
+            #     self.now_row[34], \
+            #     self.now_row[35], \
+            #     self.now_row[36], \
+            #     self.yes_share(), act)] \
+            #     = (pred_q, self.q_dict[(self.now_row[0], \
+            #     self.now_row[1], \
+            #     self.now_row[2], \
+            #     self.now_row[3], \
+            #     self.now_row[4], \
+            #     self.now_row[5], \
+            #     self.now_row[6], \
+            #     self.now_row[7], \
+            #     self.now_row[8], \
+            #     self.now_row[9], \
+            #     self.now_row[10], \
+            #     self.now_row[11], \
+            #     self.now_row[12], \
+            #     self.now_row[13], \
+            #     self.now_row[14], \
+            #     self.now_row[15], \
+            #     self.now_row[16], \
+            #     self.now_row[17], \
+            #     self.now_row[18], \
+            #     self.now_row[19], \
+            #     self.now_row[20], \
+            #     self.now_row[21], \
+            #     self.now_row[22], \
+            #     self.now_row[23], \
+            #     self.now_row[24], \
+            #     self.now_row[25], \
+            #     self.now_row[26], \
+            #     self.now_row[27], \
+            #     self.now_row[28], \
+            #     self.now_row[29], \
+            #     self.now_row[30], \
+            #     self.now_row[31], \
+            #     self.now_row[32], \
+            #     self.now_row[33], \
+            #     self.now_row[34], \
+            #     self.now_row[35], \
+            #     self.now_row[36], \
+            #     self.yes_share(), act)][1] + 1)
+
+            q_compare_dict[tuple(now_row)] = self.q_dict[tuple(now_row)]
+            now_row.pop()
 
         try:
             max(q_compare_dict.iteritems(), key=lambda x:x[1])
@@ -286,134 +209,24 @@ class ChimpBot(MonkeyBot):
             print("Wrong Q Value in Q Compare Dict!")
         else:
             key, qAndT = max(q_compare_dict.iteritems(), key=lambda x:x[1])
+            # print(key[-1])
             return key[-1], qAndT[0], qAndT[1]
 
     def q_update(self):
-        q_temp = self.q_dict[(self.prev_states[0], \
-            self.prev_states[1], \
-            self.prev_states[2], \
-            self.prev_states[3], \
-            self.prev_states[4], \
-            self.prev_states[5], \
-            self.prev_states[6], \
-            self.prev_states[7], \
-            self.prev_states[8], \
-            self.prev_states[9], \
-            self.prev_states[10], \
-            self.prev_states[11], \
-            self.prev_states[12], \
-            self.prev_states[13], \
-            self.prev_states[14], \
-            self.prev_states[15], \
-            self.prev_states[16], \
-            self.prev_states[17], \
-            self.prev_states[18], \
-            self.prev_states[19], \
-            self.prev_states[20], \
-            self.prev_states[21], \
-            self.prev_states[22], \
-            self.prev_states[23], \
-            self.prev_states[24], \
-            self.prev_states[25], \
-            self.prev_states[26], \
-            self.prev_states[27], \
-            self.prev_states[28], \
-            self.prev_states[29], \
-            self.prev_states[30], \
-            self.prev_states[31], \
-            self.prev_states[32], \
-            self.prev_states[33], \
-            self.prev_states[34], \
-            self.prev_states[35], \
-            self.prev_states[36], \
-            self.prev_states[37], \
-            self.prev_action)]
+        prev_states = self.prev_states
+        prev_states.append(self.yes_share)
+        prev_states.append(self.prev_action)
 
-        q_temp0 = (1 - (1 / (q_temp[1] + 1))) * q_temp[0] + (1 / (q_temp[1] + 1)) * (self.prev_reward + self.gamma * self.max_q()[1])
+        q_temp = self.q_dict[tuple(prev_states)]
 
-        self.q_dict[(self.prev_states[0], \
-            self.prev_states[1], \
-            self.prev_states[2], \
-            self.prev_states[3], \
-            self.prev_states[4], \
-            self.prev_states[5], \
-            self.prev_states[6], \
-            self.prev_states[7], \
-            self.prev_states[8], \
-            self.prev_states[9], \
-            self.prev_states[10], \
-            self.prev_states[11], \
-            self.prev_states[12], \
-            self.prev_states[13], \
-            self.prev_states[14], \
-            self.prev_states[15], \
-            self.prev_states[16], \
-            self.prev_states[17], \
-            self.prev_states[18], \
-            self.prev_states[19], \
-            self.prev_states[20], \
-            self.prev_states[21], \
-            self.prev_states[22], \
-            self.prev_states[23], \
-            self.prev_states[24], \
-            self.prev_states[25], \
-            self.prev_states[26], \
-            self.prev_states[27], \
-            self.prev_states[28], \
-            self.prev_states[29], \
-            self.prev_states[30], \
-            self.prev_states[31], \
-            self.prev_states[32], \
-            self.prev_states[33], \
-            self.prev_states[34], \
-            self.prev_states[35], \
-            self.prev_states[36], \
-            self.prev_states[37], \
-            self.prev_action)] \
-            = (q_temp0, q_temp[1] + 1)
+        q_temp0 = (1 - (1 / (q_temp[1] + 1))) * q_temp[0] + (1 / (q_temp[1] + 1)) * (self.prev_reward + self.gamma * self.max_q(self.now_row)[1])
 
-        return ([(self.prev_states[0], \
-            self.prev_states[1], \
-            self.prev_states[2], \
-            self.prev_states[3], \
-            self.prev_states[4], \
-            self.prev_states[5], \
-            self.prev_states[6], \
-            self.prev_states[7], \
-            self.prev_states[8], \
-            self.prev_states[9], \
-            self.prev_states[10], \
-            self.prev_states[11], \
-            self.prev_states[12], \
-            self.prev_states[13], \
-            self.prev_states[14], \
-            self.prev_states[15], \
-            self.prev_states[16], \
-            self.prev_states[17], \
-            self.prev_states[18], \
-            self.prev_states[19], \
-            self.prev_states[20], \
-            self.prev_states[21], \
-            self.prev_states[22], \
-            self.prev_states[23], \
-            self.prev_states[24], \
-            self.prev_states[25], \
-            self.prev_states[26], \
-            self.prev_states[27], \
-            self.prev_states[28], \
-            self.prev_states[29], \
-            self.prev_states[30], \
-            self.prev_states[31], \
-            self.prev_states[32], \
-            self.prev_states[33], \
-            self.prev_states[34], \
-            self.prev_states[35], \
-            self.prev_states[36], \
-            self.prev_states[37], \
-            self.prev_action)])
+        self.q_dict[tuple(prev_states)] = (q_temp0, q_temp[1] + 1)
 
-    def policy(self):
-        return self.max_q()[0]
+        return (self.q_dict[tuple(prev_states)])
+
+    def policy(self, now_row):
+        return self.max_q(now_row)[0]
 
     def reset(self):
         self.cash = 1000
@@ -432,7 +245,10 @@ class ChimpBot(MonkeyBot):
         self.penalty = False
         self.fail = False
 
-    def update(self, t):
+    def make_decision(self, now_row):
+        return self.policy(now_row)
+
+    def update(self):
         # Update state
         now_states = self.now_row
 
@@ -444,7 +260,7 @@ class ChimpBot(MonkeyBot):
         if self.decision == 0: # if zero, go random
             action = random.choice(self.valid_actions)
         else: # else go with the policy
-            action = self.policy()
+            action = self.make_decision(now_states)
 
 
         # Execute action and get reward
@@ -470,7 +286,7 @@ class ChimpBot(MonkeyBot):
         try:
             self.now_env_index, self.now_row = self.iter_env.next()
         except StopIteration:
-            print("End of data. Start again.")
+            print("End of data.")
         else:
             pass
 
@@ -482,5 +298,5 @@ class ChimpBot(MonkeyBot):
         self.total_net_reward += reward
 
         print "ChimpBot.update(): Action: {0} at Price: {1}, Cash + PV = {2}, Reward = {3}".format(action, now_states[-1], self.cash + self.pv, reward)  # [debug]
-
+        print('Portfolio + Cash')
 
