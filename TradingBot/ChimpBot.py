@@ -18,7 +18,7 @@ class ChimpBot(MonkeyBot):
     total_net_reward = 0 # For counting total reward
 
 
-    random_rounds = 100 # Number of rounds where the bot chooses to go monkey
+    random_rounds = 150 # Number of rounds where the bot chooses to go monkey
 
     trial_meta_info = {} # For monitoring what happens in each trial
 
@@ -28,6 +28,11 @@ class ChimpBot(MonkeyBot):
 
     random_counter = 0
     policy_counter = 0
+
+    track_key1 = {'Sell': 0, 'Buy': 0, 'Hold': 0}
+    track_key2 = {'Sell': 0, 'Buy': 0, 'Hold': 0}
+
+    track_random_decision = {'Sell': 0, 'Buy': 0, 'Hold': 0}
 
     def __init__(self, dfEnv):
         super(ChimpBot, self).__init__(dfEnv)
@@ -43,12 +48,20 @@ class ChimpBot(MonkeyBot):
         self.iter_env = self.env.iterrows()
         self.now_env_index, self.now_row = self.iter_env.next()
 
+        self.now_yes_share = ''
+
+        self.prev_cash = self.cash
+        self.prev_share = self.share
+        self.prev_pv = self.pv
+
         self.q_df_columns = list(self.env.columns)
         self.q_df_columns.pop()
         self.q_df_columns.extend(['Yes Share', 'Action', 'Q Value'])
         self.q_df = pd.DataFrame(columns=self.q_df_columns)
-        self.q_dict = defaultdict(lambda: [0, 0]) # element of q_dict is (state, act): [q_value, t]
+        self.q_dict = defaultdict(lambda: (0, 0)) # element of q_dict is (state, act): [q_value, t]
 
+        self.negative_reward = 0
+        self.n_reward_hisotry = []
         self.net_reward = 0
 
         # Smartcab use only
@@ -102,23 +115,27 @@ class ChimpBot(MonkeyBot):
             return 0
 
     def max_q(self, now_row):
-        now_row = list(now_row)
-        now_row.pop() # disregard the Trade Price
-        print(now_row)
-        now_row.append(self.yes_share())
+        # now_row = list(now_row)
+        # now_row.pop() # disregard the Trade Price
+        # print(type(now_row))
+        now_row2 = list(now_row)
+        now_row2.append(self.now_yes_share)
         max_q = ''
         q_compare_dict = {}
 
+        if len(now_row2) > 38:
+            raise ValueError("Got ya bastard! @ MaxQ")
+
         # Populate the q_dict
         for act in set(self.valid_actions):
-            now_row.append(act)
+            now_row2.append(act)
+            now_row_key = tuple(now_row2)
+            _ = self.q_dict[now_row_key]
 
-            _ = self.q_dict[tuple(now_row)]
-
-            print(_)
+            print(act, _)
 
             # # Ensenble-Q Algorithm
-            # if np.random.choice(2, p = [0.5, 1 - 0.5]) == 0 and len(self.q_dict) > 5000:
+            # if np.random.choice(2, p = [0.5, 1 - 0.5]) == 0 and len(self.q_dict) > 2500000:
             #     test_X = list(self.now_row[:36])
             #     test_X.append(act)
             #     pred_q = self.q_reg.predict(test_X.reshape(1, -1))
@@ -200,8 +217,8 @@ class ChimpBot(MonkeyBot):
             #     self.now_row[36], \
             #     self.yes_share(), act)][1] + 1)
 
-            q_compare_dict[tuple(now_row)] = self.q_dict[tuple(now_row)]
-            now_row.pop()
+            q_compare_dict[now_row_key] = self.q_dict[now_row_key]
+            now_row2.pop()
 
         try:
             max(q_compare_dict.iteritems(), key=lambda x:x[1])
@@ -209,79 +226,143 @@ class ChimpBot(MonkeyBot):
             print("Wrong Q Value in Q Compare Dict!")
         else:
             key, qAndT = max(q_compare_dict.iteritems(), key=lambda x:x[1])
-            # print(key[-1])
+            print("Action: {}".format(key[-1]))
             return key[-1], qAndT[0], qAndT[1]
 
     def q_update(self):
-        prev_states = self.prev_states
-        prev_states.append(self.yes_share)
+        print("Data Index: {}".format(self.now_env_index))
+        now_states = list(self.now_row)
+        # now_states = list(now_states)
+        now_states.pop() # disregard the Trade Price
+
+        prev_states = list(self.prev_states)
+
+        if len(prev_states) > 37:
+            raise ValueError("Got ya bastard! @ Q_Update...something wrong with the self.prev_states!!!")
+
+        prev_states.append(self.prev_yes_share)
         prev_states.append(self.prev_action)
+        prev_states_key = tuple(prev_states)
 
-        q_temp = self.q_dict[tuple(prev_states)]
+        if len(prev_states_key) > 39:
+            raise ValueError("Got ya bastard! @ Q_Update")
 
-        q_temp0 = (1 - (1 / (q_temp[1] + 1))) * q_temp[0] + (1 / (q_temp[1] + 1)) * (self.prev_reward + self.gamma * self.max_q(self.now_row)[1])
+        q_temp = self.q_dict[prev_states_key]
 
-        self.q_dict[tuple(prev_states)] = (q_temp0, q_temp[1] + 1)
+        q_temp0 = (1 - (1 / (q_temp[1] + 1))) * q_temp[0] + (1 / (q_temp[1] + 1)) * (self.prev_reward + self.gamma * self.max_q(now_states)[1])
 
-        return (self.q_dict[tuple(prev_states)])
+        if prev_states_key[:-1] == ('Low', 'Low', 'Average', 'Average', 'Low', 'Average', 'Average', 'Average', 'Low', 'Low', 'Low', 'Low', 'Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'N-Very Low', 'Low', 'Average', 'N-Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'High', 'Yes'):
+            self.track_key1[prev_states_key[-1]] += 1
+        elif prev_states_key[:-1] == ('Low', 'Low', 'Average', 'Average', 'Low', 'Average', 'Average', 'Average', 'Low', 'Low', 'Low', 'Low', 'Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'N-Very Low', 'Low', 'Average', 'N-Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'High', 'No'):
+            self.track_key2[prev_states_key[-1]] += 1
+        # elif prev_states_key[:-1] == ('Very High', 'Very High', 'Very High', 'Very High', 'Very High', 'Very High', 'Average', 'High', 'Average', 'Average', 'Average', 'Low', 'Average', 'Very Low', 'Low', 'N-Very Low', 'N-Very Low', 'N-Very Low', 'N-Very Low', 'Very Low', 'Very Low', 'Average', 'Very Low', 'Low', 'Low', 'Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Low', 'Very Low', 'Low', 'Very Low', 'Average', 'No'):
+        #     self.track_key2[prev_states_key[-1]] += 1
+
+        self.q_dict[prev_states_key] = (q_temp0, q_temp[1] + 1)
+        # print("Now Action: {}".format())
+        print(prev_states_key)
+        return (self.q_dict[prev_states_key])
 
     def policy(self, now_row):
         return self.max_q(now_row)[0]
 
     def reset(self):
+        self.pv_history_list.append(self.pv + self.cash)
+        self.iter_env = self.env.iterrows()
+        self.now_env_index, self.now_row = self.iter_env.next()
+
         self.cash = 1000
         self.share = 0
         self.pv = 0
 
-        if self.epsilon - 1/self.random_rounds > 0.2: # Epislon threshold: 0.2
+        self.prev_cash = self.cash
+        self.prev_share = self.share
+        self.prev_pv = self.pv
+
+        if self.epsilon - 1/self.random_rounds > 0.05: # Epislon threshold: 0.05
             self.random_counter += 1
             self.epsilon = self.epsilon - 1/self.random_rounds
         else:
-            self.epsilon = 0.2 # Epislon threshold: 0.2
+            self.epsilon = 0.05 # Epislon threshold: 0.1
             self.policy_counter += 1
 
         self.net_reward = 0
-        self.num_step = 0 # Recalculate the steps for the new trial
-        self.penalty = False
-        self.fail = False
+        # self.num_step = 0 # Recalculate the steps for the new trial
+        # self.penalty = False
+        # self.fail = False
 
     def make_decision(self, now_row):
         return self.policy(now_row)
 
     def update(self):
         # Update state
-        now_states = self.now_row
+        now_states = list(self.now_row)
+
+        if len(now_states) > 38:
+            print(now_states)
+            raise ValueError("Got ya bastard! @ Q_Update...something wrong with the self.now_row!!!")
+
+        # now_states = list(now_states)
+        # print(type(self.now_row))
+        now_states.pop() # disregard the Trade Price
+
+        if len(now_states) > 37:
+            print(now_states)
+            raise ValueError("Got ya bastard! @ Q_Update...something wrong with now_states after pop!!!")
 
         # Exploitation-exploration decisioning
+        random.seed(datetime.now())
         self.decision = np.random.choice(2, p = [self.epsilon, 1 - self.epsilon]) # decide to go random or with the policy
         # self.decision = 0 # Force random mode
 
-        # print("random decision: {}".format(self.decision))
+        print("random decision: {0}, Epislon: {1}".format(self.decision, self.epsilon))
         if self.decision == 0: # if zero, go random
+            random.seed(datetime.now())
             action = random.choice(self.valid_actions)
+            if tuple(now_states) == ('Low', 'Low', 'Average', 'Average', 'Low', 'Average', 'Average', 'Average', 'Low', 'Low', 'Low', 'Low', 'Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'N-Very Low', 'Low', 'Average', 'N-Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'High'):
+                self.track_random_decision[action] += 1
         else: # else go with the policy
             action = self.make_decision(now_states)
 
+        if len(now_states) > 37:
+            print(now_states)
+            raise ValueError("Got ya bastard! @ Q_Update...something wrong with now_states after make_decision!!!")
+
+        self.now_yes_share = self.yes_share()
 
         # Execute action and get reward
         if action == 'Buy':
-            self.buy(now_states[-1])
+            # print(self.now_row)
+            self.buy(self.now_row[-1])
         elif action == 'Sell':
-            self.sell(now_states[-1])
+            # print(self.now_row)
+            self.sell(self.now_row[-1])
+        elif action == 'Hold':
+            # print(self.now_row)
+            self.hold(self.now_row[-1])
         else:
-            self.hold(now_states[-1])
+            raise ValueError("Wrong action man!")
 
         try:
             self.prev_states
         except AttributeError:
             print("Running the first time...no prevs exist.")
         else:
-            reward = (self.cash - self.prev_cash) + (self.pv - self.prev)
             self.q_update()
 
+        reward = (self.cash - self.prev_cash) + (self.pv - self.prev_pv)
+
         self.prev_states = now_states
+
+        if len(now_states) > 37:
+            raise ValueError("Got ya bastard! @ Q_Update...something wrong with the now_states!!!")
+
         self.prev_action = action
+        self.prev_yes_share = self.now_yes_share
         self.prev_reward = reward
+        self.prev_cash = self.cash
+        self.prev_share = self.share
+        self.prev_pv = self.pv
 
         try:
             self.now_env_index, self.now_row = self.iter_env.next()
@@ -297,6 +378,6 @@ class ChimpBot(MonkeyBot):
 
         self.total_net_reward += reward
 
-        print "ChimpBot.update(): Action: {0} at Price: {1}, Cash + PV = {2}, Reward = {3}".format(action, now_states[-1], self.cash + self.pv, reward)  # [debug]
-        print('Portfolio + Cash')
+        print "ChimpBot.update(): Action: {0} at Price: {1}, Cash: {2}, Num_Share: {3}, Cash + PV = {4}, Reward = {5}".format(action, self.now_row[-1], self.cash, self.share, self.cash + self.pv, reward)  # [debug]
+        print('Portfolio + Cash: {}'.format(self.cash + self.pv))
 
