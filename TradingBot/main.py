@@ -12,7 +12,7 @@ def main():
 	print(chimp.env)
 	q_dict_length = []
 
-	for i in range(500):
+	for i in range(3000):
 		for j in range(len(chimp.env)):
 			print("{0}-{1}".format(i + 1, j + 1))
 			chimp.update()
@@ -22,15 +22,15 @@ def main():
 	print(q_dict_length)
 
 	# Convert Q-Table to Dataframe
-	result_dict = defaultdict(list)
-	for index, row in chimp.q_dict.iteritems():
-	    for i in range(len(chimp.q_dict.keys()[0])):
-	        column_name = 'col' + str(i + 1)
-	        result_dict[column_name].append(index[i])
-	    result_dict['Q'].append(chimp.q_dict[index][0])
+	# result_dict = defaultdict(list)
+	# for index, row in chimp.q_dict.iteritems():
+	#     for i in range(len(chimp.q_dict.keys()[0])):
+	#         column_name = 'col' + str(i + 1)
+	#         result_dict[column_name].append(index[i])
+	#     result_dict['Q'].append(chimp.q_dict[index][0])
 
-	q_df = pd.DataFrame(result_dict)
-	q_df.to_csv('q_df.csv')
+	# q_df = pd.DataFrame(result_dict)
+	# q_df.to_csv('q_df.csv')
 
 	# print(chimp.track_key1)
 	# print(chimp.track_key2)

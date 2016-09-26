@@ -8,7 +8,10 @@ import numpy as np
 from datetime import datetime, timedelta
 import time
 import random
-from sklearn.ensemble import RandomForestRegressor
+
+from sklearn import cross_validation
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.linear_model import LinearRegression
 
 class ChimpBot(MonkeyBot):
     """An agent that learns to drive in the smartcab world."""
@@ -33,6 +36,8 @@ class ChimpBot(MonkeyBot):
     track_key2 = {'Sell': 0, 'Buy': 0, 'Hold': 0}
 
     track_random_decision = {'Sell': 0, 'Buy': 0, 'Hold': 0}
+
+    reset_counter = 0
 
     def __init__(self, dfEnv):
         super(ChimpBot, self).__init__(dfEnv)
@@ -64,41 +69,55 @@ class ChimpBot(MonkeyBot):
         self.n_reward_hisotry = []
         self.net_reward = 0
 
+        self.reset_counter = 0
+
         # Smartcab use only
         # self.penalty = False
         # self.num_step = 0 # Number of steps for each trial; get reset each time a new trial begins
 
     def make_q_df(self):
-        self.q_df = pd.DataFrame(columns=self.q_df_columns)
-        for key, qAndT in self.q_dict.iteritems():
-            key_list = list(key)
-            key_list.append(qAndT[0])
-            dfTemp = pd.DataFrame([key_list], columns=self.q_df_columns)
-            self.q_df = self.q_df.append(dfTemp, ignore_index=True)
+        result_dict = defaultdict(list)
 
-        def actions_to_ints(string):
-            if string == 'Hold':
-                return 0
-            elif string == 'Buy':
+        for index, row in self.q_dict.iteritems():
+            for i in range(len(self.q_dict.keys()[0])):
+                column_name = 'col' + str(i + 1)
+                result_dict[column_name].append(index[i])
+            result_dict['Q'].append(self.q_dict[index][0])
+
+        self.q_df = pd.DataFrame(result_dict)
+        q_df_column_list = ['col1', 'col2', 'col3', 'col4', 'col5', 'col6', 'col7', 'col8', 'col9', 'col10', 'col11', 'col12', 'col13', 'col14', 'col15', 'col16', 'col17', 'col18', 'col19', 'col20', 'col21', 'col22', 'col23', 'col24', 'col25', 'col26', 'col27', 'col28', 'col29', 'col30', 'col31', 'col32', 'col33', 'col34', 'col35', 'col36', 'col37', 'col38', 'col39', 'Q']
+        self.q_df = self.q_df[q_df_column_list]
+
+        def transfer_action(x):
+            if x == 'Buy':
                 return 1
-            elif string == 'Sell':
+            elif x == 'Sell':
                 return 2
+            elif x == 'Hold':
+                return 0
             else:
-                raise ValueError('Wrong action man!')
+                raise ValueError("Wrong action!")
 
-        self.q_df['Action'] = self.q_df['Action'].apply(actions_to_ints)
+        self.q_df['col39'] = self.q_df['col39'].apply(transfer_action)
 
     def split_q_df(self):
-        self.q_df_train = self.q_df.ix[:, :-1]
-        self.q_df_test = self.q_df.ix[:, -1]
-
-    def update_q_df(self):
-        self.make_q_df()
-        self.split_q_df()
+        self.q_df_X = self.q_df.ix[:, :-1]
+        self.q_df_y = self.q_df.ix[:, -1]
+        # self.X_train, self.X_test, self.y_train, self.y_test = cross_validation.train_test_split(self.q_df_X, self.q_df_y, test_size=0.1, random_state=0)
 
     def train_on_q_df(self):
-        self.q_reg = RandomForestRegressor(n_estimators=64)
-        self.q_reg = self.q_reg.fit(self.q_df_train, self.q_df_test)
+        self.q_reg = KNeighborsRegressor(n_neighbors=5)
+        # self.q_reg = LinearRegression()
+        print(self.q_df_X)
+        self.q_reg = self.q_reg.fit(self.q_df_X, self.q_df_y)
+
+    def update_q_model(self):
+        print("Updating Q model...")
+        start_time = time.time()
+        self.make_q_df()
+        self.split_q_df()
+        self.train_on_q_df()
+        print("Update took {} seconds".format(time.time() - start_time))
 
     def from_state_action_predict_q(self, state_action):
         state_action = [state_action]
@@ -115,9 +134,19 @@ class ChimpBot(MonkeyBot):
             return 0
 
     def max_q(self, now_row):
-        # now_row = list(now_row)
-        # now_row.pop() # disregard the Trade Price
-        # print(type(now_row))
+        def transfer_action(x):
+            if x == 'Buy':
+                return 1
+            elif x == 'Sell':
+                return 2
+            elif x == 'Hold':
+                return 0
+            else:
+                raise ValueError("Wrong action!")
+
+        def str_float_int(x):
+            return int(float(x))
+
         now_row2 = list(now_row)
         now_row2.append(self.now_yes_share)
         max_q = ''
@@ -130,92 +159,28 @@ class ChimpBot(MonkeyBot):
         for act in set(self.valid_actions):
             now_row2.append(act)
             now_row_key = tuple(now_row2)
+
             _ = self.q_dict[now_row_key]
 
-            print(act, _)
+            # # K-Q Algorithm
+            if np.random.choice(2, p = [0.9, 0.1]) == 1 and len(self.q_dict) > 30000:
+                print("Dreaming mode...")
+                start_time = time.time()
+                # self.update_q_model()
 
-            # # Ensenble-Q Algorithm
-            # if np.random.choice(2, p = [0.5, 1 - 0.5]) == 0 and len(self.q_dict) > 2500000:
-            #     test_X = list(self.now_row[:36])
-            #     test_X.append(act)
-            #     pred_q = self.q_reg.predict(test_X.reshape(1, -1))
+                single_X = np.array(now_row_key)
+                arr_int = np.vectorize(str_float_int)
+                single_X[-1] = transfer_action(single_X[-1])
+                single_X = arr_int(single_X)
+                single_X = single_X.reshape(1, -1)
+                print(single_X)
+                pred_q = self.q_reg.predict(single_X)
+                dreamed_q = (1 - (1 / (self.q_dict[now_row_key][1] + 1))) * self.q_dict[now_row_key][0] + (1 / (self.q_dict[now_row_key][1] + 1)) * pred_q[0]
+                self.q_dict[now_row_key] = (dreamed_q, self.q_dict[now_row_key][1] + 1)
+                print("Q-dreamed: {0} for Act: {1}, taking {2} seconds.".format(self.q_dict[now_row_key], act, time.time() - start_time))
 
-            #     self.q_dict[(self.now_row[0], \
-            #     self.now_row[1], \
-            #     self.now_row[2], \
-            #     self.now_row[3], \
-            #     self.now_row[4], \
-            #     self.now_row[5], \
-            #     self.now_row[6], \
-            #     self.now_row[7], \
-            #     self.now_row[8], \
-            #     self.now_row[9], \
-            #     self.now_row[10], \
-            #     self.now_row[11], \
-            #     self.now_row[12], \
-            #     self.now_row[13], \
-            #     self.now_row[14], \
-            #     self.now_row[15], \
-            #     self.now_row[16], \
-            #     self.now_row[17], \
-            #     self.now_row[18], \
-            #     self.now_row[19], \
-            #     self.now_row[20], \
-            #     self.now_row[21], \
-            #     self.now_row[22], \
-            #     self.now_row[23], \
-            #     self.now_row[24], \
-            #     self.now_row[25], \
-            #     self.now_row[26], \
-            #     self.now_row[27], \
-            #     self.now_row[28], \
-            #     self.now_row[29], \
-            #     self.now_row[30], \
-            #     self.now_row[31], \
-            #     self.now_row[32], \
-            #     self.now_row[33], \
-            #     self.now_row[34], \
-            #     self.now_row[35], \
-            #     self.now_row[36], \
-            #     self.yes_share(), act)] \
-            #     = (pred_q, self.q_dict[(self.now_row[0], \
-            #     self.now_row[1], \
-            #     self.now_row[2], \
-            #     self.now_row[3], \
-            #     self.now_row[4], \
-            #     self.now_row[5], \
-            #     self.now_row[6], \
-            #     self.now_row[7], \
-            #     self.now_row[8], \
-            #     self.now_row[9], \
-            #     self.now_row[10], \
-            #     self.now_row[11], \
-            #     self.now_row[12], \
-            #     self.now_row[13], \
-            #     self.now_row[14], \
-            #     self.now_row[15], \
-            #     self.now_row[16], \
-            #     self.now_row[17], \
-            #     self.now_row[18], \
-            #     self.now_row[19], \
-            #     self.now_row[20], \
-            #     self.now_row[21], \
-            #     self.now_row[22], \
-            #     self.now_row[23], \
-            #     self.now_row[24], \
-            #     self.now_row[25], \
-            #     self.now_row[26], \
-            #     self.now_row[27], \
-            #     self.now_row[28], \
-            #     self.now_row[29], \
-            #     self.now_row[30], \
-            #     self.now_row[31], \
-            #     self.now_row[32], \
-            #     self.now_row[33], \
-            #     self.now_row[34], \
-            #     self.now_row[35], \
-            #     self.now_row[36], \
-            #     self.yes_share(), act)][1] + 1)
+
+            print(act, self.q_dict[now_row_key])
 
             q_compare_dict[now_row_key] = self.q_dict[now_row_key]
             now_row2.pop()
@@ -226,7 +191,7 @@ class ChimpBot(MonkeyBot):
             print("Wrong Q Value in Q Compare Dict!")
         else:
             key, qAndT = max(q_compare_dict.iteritems(), key=lambda x:x[1])
-            print("Action: {}".format(key[-1]))
+            print("Action: {0}, with Q-value: {1}".format(key[-1], qAndT[0]))
             return key[-1], qAndT[0], qAndT[1]
 
     def q_update(self):
@@ -287,6 +252,11 @@ class ChimpBot(MonkeyBot):
             self.policy_counter += 1
 
         self.net_reward = 0
+
+        if self.reset_counter % 100 == 0:
+            self.update_q_model()
+
+        self.reset_counter += 1
         # self.num_step = 0 # Recalculate the steps for the new trial
         # self.penalty = False
         # self.fail = False
@@ -364,6 +334,9 @@ class ChimpBot(MonkeyBot):
         self.prev_share = self.share
         self.prev_pv = self.pv
 
+        # if len(self.q_dict) > 20000:
+        #     self.update_q_model()
+
         try:
             self.now_env_index, self.now_row = self.iter_env.next()
         except StopIteration:
@@ -380,4 +353,5 @@ class ChimpBot(MonkeyBot):
 
         print "ChimpBot.update(): Action: {0} at Price: {1}, Cash: {2}, Num_Share: {3}, Cash + PV = {4}, Reward = {5}".format(action, self.now_row[-1], self.cash, self.share, self.cash + self.pv, reward)  # [debug]
         print('Portfolio + Cash: {}'.format(self.cash + self.pv))
+        print("================================")
 
