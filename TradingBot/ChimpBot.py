@@ -54,6 +54,8 @@ class ChimpBot(MonkeyBot):
         self.now_env_index, self.now_row = self.iter_env.next()
 
         self.now_yes_share = ''
+        self.now_action = ''
+        # self.now_q = 0
 
         self.prev_cash = self.cash
         self.prev_share = self.share
@@ -163,7 +165,8 @@ class ChimpBot(MonkeyBot):
             _ = self.q_dict[now_row_key]
 
             # # K-Q Algorithm
-            if np.random.choice(2, p = [0.9, 0.1]) == 1 and len(self.q_dict) > 30000:
+            # if np.random.choice(2, p = [0.9, 0.1]) == 1 and len(self.q_dict) > 30000:
+            if _[1] == 0 and np.random.choice(2, p = [0.7, 0.3]) == 1 and len(self.q_dict) > 30000:
                 print("Dreaming mode...")
                 start_time = time.time()
                 # self.update_q_model()
@@ -232,7 +235,9 @@ class ChimpBot(MonkeyBot):
         return self.max_q(now_row)[0]
 
     def reset(self):
+        # Portfolio change over iterations
         self.pv_history_list.append(self.pv + self.cash)
+
         self.iter_env = self.env.iterrows()
         self.now_env_index, self.now_row = self.iter_env.next()
 
@@ -327,6 +332,7 @@ class ChimpBot(MonkeyBot):
         if len(now_states) > 37:
             raise ValueError("Got ya bastard! @ Q_Update...something wrong with the now_states!!!")
 
+        self.now_action = action
         self.prev_action = action
         self.prev_yes_share = self.now_yes_share
         self.prev_reward = reward
