@@ -166,7 +166,8 @@ class ChimpBot(MonkeyBot):
 
             # # K-Q Algorithm
             # if np.random.choice(2, p = [0.9, 0.1]) == 1 and len(self.q_dict) > 30000:
-            if _[1] == 0 and np.random.choice(2, p = [0.7, 0.3]) == 1 and len(self.q_dict) > 30000:
+            # if _[1] == 0 and np.random.choice(2, p = [0.7, 0.3]) == 1 and len(self.q_dict) > 30000:
+            if _[1] == 0 and len(self.q_dict) > 30000:
                 print("Dreaming mode...")
                 start_time = time.time()
                 # self.update_q_model()

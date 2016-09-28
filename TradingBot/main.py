@@ -13,7 +13,7 @@ def main():
 	print(chimp.env)
 	# q_dict_length = []
 
-	for i in range(300):
+	for i in range(20):
 		for j in range(len(chimp.env)):
 			print("{0}-{1}".format(i + 1, j + 1))
 			chimp.update()
@@ -24,7 +24,7 @@ def main():
 
 	chimp_test = ChimpBot(dfTest)
 
-	for i in range(100):
+	for i in range(3):
 		chimp_test.q_df = chimp.q_df
 		chimp_test.q_dict = chimp.q_dict
 		chimp_test.q_reg = chimp.q_reg
