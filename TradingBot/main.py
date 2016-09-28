@@ -11,23 +11,24 @@ def main():
 	chimp = ChimpBot(dfEnv)
 
 	print(chimp.env)
-	# q_dict_length = []
+	q_dict_length = []
 
-	for i in range(300):
+	for i in range(20):
 		for j in range(len(chimp.env)):
 			print("{0}-{1}".format(i + 1, j + 1))
 			chimp.update()
-		# q_dict_length.append(len(chimp.q_dict))
+		q_dict_length.append(len(chimp.q_dict))
 		chimp.reset()
 	# print(chimp.pv_history_list)
-	# print(q_dict_length)
+	print(q_dict_length)
 
 	chimp_test = ChimpBot(dfTest)
 
-	for i in range(100):
+	for i in range(2):
 		chimp_test.q_df = chimp.q_df
 		chimp_test.q_dict = chimp.q_dict
 		chimp_test.q_reg = chimp.q_reg
+		chimp_test.epsilon = 0.05
 
 		for j in range(len(chimp_test.env)):
 			print("Iter-Row: {0}-{1}".format(i, j))
@@ -49,17 +50,17 @@ def main():
 	# 	share_list.append[chimp.share]
 	# 	pv_list.append[chimp.pv]
 
+def q_table_to_dataframe(q_dict):
+	Convert Q-Table to Dataframe
+	result_dict = defaultdict(list)
+	for index, row in chimp.q_dict.iteritems():
+	    for i in range(len(chimp.q_dict.keys()[0])):
+	        column_name = 'col' + str(i + 1)
+	        result_dict[column_name].append(index[i])
+	    result_dict['Q'].append(chimp.q_dict[index][0])
 
-	# Convert Q-Table to Dataframe
-	# result_dict = defaultdict(list)
-	# for index, row in chimp.q_dict.iteritems():
-	#     for i in range(len(chimp.q_dict.keys()[0])):
-	#         column_name = 'col' + str(i + 1)
-	#         result_dict[column_name].append(index[i])
-	#     result_dict['Q'].append(chimp.q_dict[index][0])
-
-	# q_df = pd.DataFrame(result_dict)
-	# q_df.to_csv('q_df.csv')
+	q_df = pd.DataFrame(result_dict)
+	q_df.to_csv('q_df.csv')
 
 	# print(chimp.track_key1)
 	# print(chimp.track_key2)

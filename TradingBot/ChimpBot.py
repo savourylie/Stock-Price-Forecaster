@@ -8,6 +8,7 @@ import numpy as np
 from datetime import datetime, timedelta
 import time
 import random
+import sys
 
 from sklearn import cross_validation
 from sklearn.neighbors import KNeighborsRegressor
@@ -78,6 +79,18 @@ class ChimpBot(MonkeyBot):
         # self.num_step = 0 # Number of steps for each trial; get reset each time a new trial begins
 
     def make_q_df(self):
+        def str_float_int(x):
+            try:
+                int(float(x))
+            except ValueError:
+                print(type(x))
+                print("Inside Make_Q_DF")
+                print("->{}<-".format(x))
+                sys.exit(1)
+            return int(float(x))
+
+        arr_int = np.vectorize(str_float_int)
+
         result_dict = defaultdict(list)
 
         for index, row in self.q_dict.iteritems():
@@ -102,15 +115,32 @@ class ChimpBot(MonkeyBot):
 
         self.q_df['col39'] = self.q_df['col39'].apply(transfer_action)
 
+        self.q_df.ix[:, :-1] = self.q_df.ix[:, :-1].apply(arr_int)
+
     def split_q_df(self):
         self.q_df_X = self.q_df.ix[:, :-1]
         self.q_df_y = self.q_df.ix[:, -1]
+        print(self.q_df_X)
+        print(self.q_df_y)
+
         # self.X_train, self.X_test, self.y_train, self.y_test = cross_validation.train_test_split(self.q_df_X, self.q_df_y, test_size=0.1, random_state=0)
 
     def train_on_q_df(self):
         self.q_reg = KNeighborsRegressor(n_neighbors=5)
         # self.q_reg = LinearRegression()
         print(self.q_df_X)
+
+        try:
+            self.q_df_X.astype(np.float64)
+        except ValueError:
+            print("Something's wrong with q_df_X")
+            # sys.exit(1)
+        try:
+            self.q_df_y.astype(np.float64)
+        except ValueError:
+            print("Something's wrong with q_df_y")
+            sys.exit(1)
+
         self.q_reg = self.q_reg.fit(self.q_df_X, self.q_df_y)
 
     def update_q_model(self):
@@ -147,6 +177,13 @@ class ChimpBot(MonkeyBot):
                 raise ValueError("Wrong action!")
 
         def str_float_int(x):
+            try:
+                int(float(x))
+            except ValueError:
+                print(type(x))
+                print("Inside Max_Q")
+                print("->{}<-".format(x))
+                sys.exit(1)
             return int(float(x))
 
         now_row2 = list(now_row)
