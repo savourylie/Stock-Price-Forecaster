@@ -1,6 +1,7 @@
 from chimpbot import ChimpBot
 import pandas as pd
 from collections import defaultdict
+from copy import deepcopy
 
 def main():
 	# Initiating data and the chimp
@@ -13,7 +14,7 @@ def main():
 	print(chimp.env)
 	# q_dict_length = []
 
-	for i in range(20):
+	for i in range(500):
 		for j in range(len(chimp.env)):
 			print("{0}-{1}".format(i + 1, j + 1))
 			chimp.update()
@@ -22,12 +23,17 @@ def main():
 	# print(chimp.pv_history_list)
 	# print(q_dict_length)
 
+	q_df = deepcopy(chimp.q_df)
+	q_dict = deepcopy(chimp.q_dict)
+	q_reg = deepcopy(chimp.q_reg)
+
 	chimp_test = ChimpBot(dfTest)
 
-	for i in range(3):
-		chimp_test.q_df = chimp.q_df
-		chimp_test.q_dict = chimp.q_dict
-		chimp_test.q_reg = chimp.q_reg
+	for i in range(1000):
+		chimp_test.q_df = deepcopy(q_df)
+		chimp_test.q_dict = deepcopy(q_dict)
+		chimp_test.q_reg = deepcopy(q_reg)
+		chimp_test.epsilon = 0.05
 
 		for j in range(len(chimp_test.env)):
 			print("Iter-Row: {0}-{1}".format(i, j))

@@ -53,7 +53,7 @@ class ChimpBot(MonkeyBot):
         self.iter_env = self.env.iterrows()
         self.now_env_index, self.now_row = self.iter_env.next()
 
-        self.now_yes_share = ''
+        self.now_yes_share = 0
         self.now_action = ''
         # self.now_q = 0
 
@@ -100,7 +100,17 @@ class ChimpBot(MonkeyBot):
             else:
                 raise ValueError("Wrong action!")
 
+        def str_float_int(x):
+            return int(float(x))
+
+        arr_int = np.vectorize(str_float_int)
+
         self.q_df['col39'] = self.q_df['col39'].apply(transfer_action)
+        print(self.q_df)
+        self.q_df.to_csv('temp_q_df.csv')
+        self.q_df = pd.read_csv('temp_q_df.csv', index_col=0, parse_dates=True, na_values = ['nan'])
+        self.q_df.dropna(inplace=True)
+        self.q_df.ix[:, :-1] = self.q_df.ix[:, :-1].apply(arr_int)
 
     def split_q_df(self):
         self.q_df_X = self.q_df.ix[:, :-1]
@@ -167,17 +177,17 @@ class ChimpBot(MonkeyBot):
             # # K-Q Algorithm
             # if np.random.choice(2, p = [0.9, 0.1]) == 1 and len(self.q_dict) > 30000:
             # if _[1] == 0 and np.random.choice(2, p = [0.7, 0.3]) == 1 and len(self.q_dict) > 30000:
-            if _[1] == 0 and len(self.q_dict) > 30000:
+            if _[1] == 0 and len(self.q_dict) > 20000:
                 print("Dreaming mode...")
                 start_time = time.time()
                 # self.update_q_model()
 
                 single_X = np.array(now_row_key)
+                print(single_X)
                 arr_int = np.vectorize(str_float_int)
                 single_X[-1] = transfer_action(single_X[-1])
                 single_X = arr_int(single_X)
                 single_X = single_X.reshape(1, -1)
-                print(single_X)
                 pred_q = self.q_reg.predict(single_X)
                 dreamed_q = (1 - (1 / (self.q_dict[now_row_key][1] + 1))) * self.q_dict[now_row_key][0] + (1 / (self.q_dict[now_row_key][1] + 1)) * pred_q[0]
                 self.q_dict[now_row_key] = (dreamed_q, self.q_dict[now_row_key][1] + 1)
@@ -291,13 +301,15 @@ class ChimpBot(MonkeyBot):
         self.decision = np.random.choice(2, p = [self.epsilon, 1 - self.epsilon]) # decide to go random or with the policy
         # self.decision = 0 # Force random mode
 
-        print("random decision: {0}, Epislon: {1}".format(self.decision, self.epsilon))
+        print("Random decision: {0}, Epislon: {1}".format(self.decision, self.epsilon))
+        print("What the FUCK?!")
         if self.decision == 0: # if zero, go random
             random.seed(datetime.now())
             action = random.choice(self.valid_actions)
             if tuple(now_states) == ('Low', 'Low', 'Average', 'Average', 'Low', 'Average', 'Average', 'Average', 'Low', 'Low', 'Low', 'Low', 'Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'N-Very Low', 'Low', 'Average', 'N-Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'High'):
                 self.track_random_decision[action] += 1
         else: # else go with the policy
+            print("now_states: {}".format(now_states))
             action = self.make_decision(now_states)
 
         if len(now_states) > 37:
