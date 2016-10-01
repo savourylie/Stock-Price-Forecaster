@@ -107,9 +107,9 @@ class ChimpBot(MonkeyBot):
 
         self.q_df['col39'] = self.q_df['col39'].apply(transfer_action)
         print(self.q_df)
-        self.q_df.to_csv('temp_q_df.csv')
-        self.q_df = pd.read_csv('temp_q_df.csv', index_col=0, parse_dates=True, na_values = ['nan'])
-        self.q_df.dropna(inplace=True)
+        # self.q_df.to_csv('temp_q_df.csv')
+        # self.q_df = pd.read_csv('temp_q_df.csv', index_col=0, parse_dates=True, na_values = ['nan'])
+        # self.q_df.dropna(inplace=True)
         self.q_df.ix[:, :-1] = self.q_df.ix[:, :-1].apply(arr_int)
 
     def split_q_df(self):

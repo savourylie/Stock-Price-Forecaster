@@ -15,7 +15,7 @@ def main():
 	# q_dict_length = []
 
 	# Train the Chimp
-	for i in range(1500):
+	for i in range(500):
 		for j in range(len(chimp.env)):
 			print("{0}-{1}".format(i + 1, j + 1))
 			chimp.update()
