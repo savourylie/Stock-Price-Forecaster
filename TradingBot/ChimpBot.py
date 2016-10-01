@@ -183,7 +183,7 @@ class ChimpBot(MonkeyBot):
                 # self.update_q_model()
 
                 single_X = np.array(now_row_key)
-                print(single_X)
+                # print(single_X)
                 arr_int = np.vectorize(str_float_int)
                 single_X[-1] = transfer_action(single_X[-1])
                 single_X = arr_int(single_X)
@@ -302,7 +302,7 @@ class ChimpBot(MonkeyBot):
         # self.decision = 0 # Force random mode
 
         print("Random decision: {0}, Epislon: {1}".format(self.decision, self.epsilon))
-        print("What the FUCK?!")
+        # print("What the FUCK?!")
         if self.decision == 0: # if zero, go random
             random.seed(datetime.now())
             action = random.choice(self.valid_actions)
@@ -318,6 +318,7 @@ class ChimpBot(MonkeyBot):
 
         self.now_yes_share = self.yes_share()
 
+        print("Now Action: {}".format(action))
         # Execute action and get reward
         if action == 'Buy':
             # print(self.now_row)
@@ -338,7 +339,7 @@ class ChimpBot(MonkeyBot):
         else:
             self.q_update()
 
-        reward = (self.cash - self.prev_cash) + (self.pv - self.prev_pv)
+        reward = ((self.cash - self.prev_cash) + (self.pv - self.prev_pv)) / (self.prev_cash + self.prev_pv)
 
         self.prev_states = now_states
 
