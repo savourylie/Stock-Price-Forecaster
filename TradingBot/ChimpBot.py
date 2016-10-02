@@ -184,22 +184,26 @@ class ChimpBot(MonkeyBot):
             # # K-Q Algorithm
             # if np.random.choice(2, p = [0.9, 0.1]) == 1 and len(self.q_dict) > 30000:
             # if _[1] == 0 and np.random.choice(2, p = [0.7, 0.3]) == 1 and len(self.q_dict) > 30000:
-            if _[1] == 0 and len(self.q_dict) > 20000:
-                print("Dreaming mode...")
-                start_time = time.time()
-                # self.update_q_model()
+            try:
+                self.q_reg
+            except AttributeError:
+                print('No q_reg yet...going with default.')
+            else:
+                if _[1] == 0:
+                    print("Dreaming mode...")
+                    start_time = time.time()
+                    # self.update_q_model()
 
-                single_X = np.array(now_row_key)
-                # print(single_X)
-                arr_int = np.vectorize(str_float_int)
-                single_X[-1] = transfer_action(single_X[-1])
-                single_X = arr_int(single_X)
-                single_X = single_X.reshape(1, -1)
-                pred_q = self.q_reg.predict(single_X)
-                dreamed_q = (1 - (1 / (self.q_dict[now_row_key][1] + 1))) * self.q_dict[now_row_key][0] + (1 / (self.q_dict[now_row_key][1] + 1)) * pred_q[0]
-                self.q_dict[now_row_key] = (dreamed_q, self.q_dict[now_row_key][1] + 1)
-                print("Q-dreamed: {0} for Act: {1}, taking {2} seconds.".format(self.q_dict[now_row_key], act, time.time() - start_time))
-
+                    single_X = np.array(now_row_key)
+                    # print(single_X)
+                    arr_int = np.vectorize(str_float_int)
+                    single_X[-1] = transfer_action(single_X[-1])
+                    single_X = arr_int(single_X)
+                    single_X = single_X.reshape(1, -1)
+                    pred_q = self.q_reg.predict(single_X)
+                    dreamed_q = (1 - (1 / (self.q_dict[now_row_key][1] + 1))) * self.q_dict[now_row_key][0] + (1 / (self.q_dict[now_row_key][1] + 1)) * pred_q[0]
+                    self.q_dict[now_row_key] = (dreamed_q, self.q_dict[now_row_key][1] + 1)
+                    print("Q-dreamed: {0} for Act: {1}, taking {2} seconds.".format(self.q_dict[now_row_key], act, time.time() - start_time))
 
             print(act, self.q_dict[now_row_key])
 
