@@ -10,8 +10,10 @@ import time
 import random
 
 from sklearn import cross_validation
+from sklearn.tree import DecisionTreeRegressor
 from sklearn.neighbors import KNeighborsRegressor
-from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import AdaBoostRegressor
+from sklearn import grid_search
 
 class ChimpBot(MonkeyBot):
     """An agent that learns to drive in the smartcab world."""
@@ -118,8 +120,13 @@ class ChimpBot(MonkeyBot):
         # self.X_train, self.X_test, self.y_train, self.y_test = cross_validation.train_test_split(self.q_df_X, self.q_df_y, test_size=0.1, random_state=0)
 
     def train_on_q_df(self):
-        self.q_reg = KNeighborsRegressor(n_neighbors=5)
-        # self.q_reg = LinearRegression()
+        reg = AdaBoostRegressor(DecisionTreeRegressor(max_depth=20), random_state=0)
+        ada_parameters = {'n_estimators':[50]}
+        reg_gs = grid_search.GridSearchCV(reg, ada_parameters, cv=9)
+
+        # self.q_reg = KNeighborsRegressor(n_neighbors=5)
+        self.q_reg = reg_gs
+
         print(self.q_df_X)
         self.q_reg = self.q_reg.fit(self.q_df_X, self.q_df_y)
 
