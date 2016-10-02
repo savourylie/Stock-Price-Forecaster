@@ -6,8 +6,8 @@ from copy import deepcopy
 def main():
 	# Initiating data and the chimp
 	# dfEnv = pd.read_csv('data_train_char.csv', index_col=0, parse_dates=True, na_values = ['nan'])
-	dfEnv = pd.read_csv('data_train.csv', index_col=0, parse_dates=True, na_values = ['nan'])
-	dfTest = pd.read_csv('data_cv.csv', index_col=0, parse_dates=True, na_values = ['nan'])
+	dfEnv = pd.read_csv('data_full.csv', index_col=0, parse_dates=True, na_values = ['nan'])
+	# dfTest = pd.read_csv('data_cv.csv', index_col=0, parse_dates=True, na_values = ['nan'])
 	# dfEnv.ix[:, :-1] = dfEnv.ix[:, :-1].astype('int')
 	chimp = ChimpBot(dfEnv)
 
@@ -21,7 +21,7 @@ def main():
 			chimp.update()
 		# q_dict_length.append(len(chimp.q_dict))
 		chimp.reset()
-	# print(chimp.pv_history_list)
+	print(chimp.pv_history_list)
 	# print(q_dict_length)
 
 	# Convert Q-Table to Dataframe from trained chimp
