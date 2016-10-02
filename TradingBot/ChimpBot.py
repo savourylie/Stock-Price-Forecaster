@@ -23,7 +23,7 @@ class ChimpBot(MonkeyBot):
     total_net_reward = 0 # For counting total reward
 
 
-    random_rounds = 150 # Number of rounds where the bot chooses to go monkey
+    random_rounds = 1000 # Number of rounds where the bot chooses to go monkey
 
     trial_meta_info = {} # For monitoring what happens in each trial
 
@@ -267,11 +267,11 @@ class ChimpBot(MonkeyBot):
         self.prev_share = self.share
         self.prev_pv = self.pv
 
-        if self.epsilon - 1/self.random_rounds > 0.05: # Epislon threshold: 0.05
+        if self.epsilon - 1/self.random_rounds > 0.01: # Epislon threshold: 0.01
             self.random_counter += 1
             self.epsilon = self.epsilon - 1/self.random_rounds
         else:
-            self.epsilon = 0.05 # Epislon threshold: 0.1
+            self.epsilon = 0.01 # Epislon threshold: 0.1
             self.policy_counter += 1
 
         self.net_reward = 0

@@ -15,7 +15,7 @@ def main():
 	# q_dict_length = []
 
 	# Train the Chimp
-	for i in range(500):
+	for i in range(3000):
 		for j in range(len(chimp.env)):
 			print("{0}-{1}".format(i + 1, j + 1))
 			chimp.update()
@@ -33,29 +33,29 @@ def main():
 	    result_dict['Q'].append(chimp.q_dict[index][0])
 
 	q_df = pd.DataFrame(result_dict)
-	q_df.to_csv('q_df_1500.csv')
+	q_df.to_csv('q_df_3000_full.csv')
 
 
 	# Test the Chimp!
-	q_df = deepcopy(chimp.q_df)
-	q_dict = deepcopy(chimp.q_dict)
-	q_reg = deepcopy(chimp.q_reg)
+	# q_df = deepcopy(chimp.q_df)
+	# q_dict = deepcopy(chimp.q_dict)
+	# q_reg = deepcopy(chimp.q_reg)
 
-	chimp_test = ChimpBot(dfTest)
+	# chimp_test = ChimpBot(dfTest)
 
-	for i in range(1000):
-		chimp_test.q_df = deepcopy(q_df)
-		chimp_test.q_dict = deepcopy(q_dict)
-		chimp_test.q_reg = deepcopy(q_reg)
-		chimp_test.epsilon = 0.05
+	# for i in range(1000):
+	# 	chimp_test.q_df = deepcopy(q_df)
+	# 	chimp_test.q_dict = deepcopy(q_dict)
+	# 	chimp_test.q_reg = deepcopy(q_reg)
+	# 	chimp_test.epsilon = 0.05
 
-		for j in range(len(chimp_test.env)):
-			print("Iter-Row: {0}-{1}".format(i, j))
-			chimp_test.update()
-		chimp_test.reset()
+	# 	for j in range(len(chimp_test.env)):
+	# 		print("Iter-Row: {0}-{1}".format(i, j))
+	# 		chimp_test.update()
+	# 	chimp_test.reset()
 
-	print(chimp.pv_history_list)
-	print(chimp_test.pv_history_list)
+	# print(chimp.pv_history_list)
+	# print(chimp_test.pv_history_list)
 
 
 if __name__ == '__main__':
