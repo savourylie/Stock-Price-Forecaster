@@ -120,7 +120,7 @@ class ChimpBot(MonkeyBot):
         # self.X_train, self.X_test, self.y_train, self.y_test = cross_validation.train_test_split(self.q_df_X, self.q_df_y, test_size=0.1, random_state=0)
 
     def train_on_q_df(self):
-        reg = AdaBoostRegressor(DecisionTreeRegressor(max_depth=20), random_state=0)
+        reg = AdaBoostRegressor(DecisionTreeRegressor(max_depth=25), random_state=0)
         ada_parameters = {'n_estimators':[50]}
         reg_gs = grid_search.GridSearchCV(reg, ada_parameters, cv=9)
 
