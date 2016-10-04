@@ -2,39 +2,69 @@ from chimpbot import ChimpBot
 import pandas as pd
 from collections import defaultdict
 from copy import deepcopy
+import pickle
 
 def main():
 	# Initiating data and the chimp
-	# dfEnv = pd.read_csv('data_train_char.csv', index_col=0, parse_dates=True, na_values = ['nan'])
 	dfEnv = pd.read_csv('data_train.csv', index_col=0, parse_dates=True, na_values = ['nan'])
-	# dfTest = pd.read_csv('data_cv.csv', index_col=0, parse_dates=True, na_values = ['nan'])
-	# dfEnv.ix[:, :-1] = dfEnv.ix[:, :-1].astype('int')
-	chimp = ChimpBot(dfEnv)
+	dfTest = pd.read_csv('data_test.csv', index_col=0, parse_dates=True, na_values = ['nan'])
+	chimp_train = ChimpBot(dfEnv)
+	chimp_test = ChimpBot(dfTest)
 
-	print(chimp.env)
-	# q_dict_length = []
 
-	# Train the Chimp
 	for i in range(3500):
-		for j in range(len(chimp.env)):
-			print("{0}-{1}".format(i + 1, j + 1))
-			chimp.update()
-		# q_dict_length.append(len(chimp.q_dict))
-		chimp.reset()
-	print(chimp.pv_history_list)
-	# print(q_dict_length)
+		# Train the Chimp on train_data
+		for j in range(len(chimp_train.env)):
+			print("Train Round {0}-{1}".format(i + 1, j + 1))
+			chimp_train.update()
+		chimp_train.reset()
 
-	# Convert Q-Table to Dataframe from trained chimp
-	result_dict = defaultdict(list)
-	for index, row in chimp.q_dict.iteritems():
-	    for i in range(len(chimp.q_dict.keys()[0])):
+		# Train the Chimp on test_data
+		for k in range(len(chimp_test.env)):
+			print("Test Round {0}-{1}".format(i + 1, k + 1))
+			chimp_test.update()
+		chimp_test.reset()
+
+	with open('chimp_train_3200_pv_history.pickle', 'wb') as f1:
+		pickle.dump(chimp_train.pv_history_list, f1, pickle.HIGHEST_PROTOCOL)
+	print(chimp_train.pv_history_list)
+
+	with open('chimp_test_3200_pv_history.pickle', 'wb') as f2:
+		pickle.dump(chimp_test.pv_history_list, f2, pickle.HIGHEST_PROTOCOL)
+	print(chimp_test.pv_history_list)
+
+	# Convert Q-Table to Dataframe from trained chimp (train)
+	result_dict_train = defaultdict(list)
+	for index, row in chimp_train.q_dict.iteritems():
+	    for i in range(len(chimp_train.q_dict.keys()[0])):
 	        column_name = 'col' + str(i + 1)
-	        result_dict[column_name].append(index[i])
-	    result_dict['Q'].append(chimp.q_dict[index][0])
+	        result_dict_train[column_name].append(index[i])
+	    result_dict_train['Q'].append(chimp_train.q_dict[index][0])
 
-	q_df = pd.DataFrame(result_dict)
-	q_df.to_csv('q_df_32_35_train.csv')
+	q_df = pd.DataFrame(result_dict_train)
+	q_df.to_csv('q_df_3200_train.csv')
 
+	# Convert Q-Table to Dataframe from trained chimp (train)
+	result_dict_test = defaultdict(list)
+	for index, row in chimp_test.q_dict.iteritems():
+	    for i in range(len(chimp_test.q_dict.keys()[0])):
+	        column_name = 'col' + str(i + 1)
+	        result_dict_test[column_name].append(index[i])
+	    result_dict_test['Q'].append(chimp_test.q_dict[index][0])
+
+	q_df = pd.DataFrame(result_dict_test)
+	q_df.to_csv('q_df_3200_test.csv')
+
+	# Save the chimp train properties
+	# Save q_df
+	with open('3200_train_q_df.pickle', 'wb') as f:
+		pickle.dump(chimp_train.q_df, f, pickle.HIGHEST_PROTOCOL)
+	# Save q_dict
+	with open('3200_train_q_dict.pickle', 'wb') as f:
+		pickle.dump(chimp_train.q_dict, f, pickle.HIGHEST_PROTOCOL)
+	# Save q_reg
+	with open('3200_train_q_reg.pickle', 'wb') as f:
+		pickle.dump(chimp_train.q_reg, f, pickle.HIGHEST_PROTOCOL)
 
 	# Test the Chimp!
 	# q_df = deepcopy(chimp.q_df)
