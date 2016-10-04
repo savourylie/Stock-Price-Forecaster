@@ -23,7 +23,7 @@ class ChimpBot(MonkeyBot):
     total_net_reward = 0 # For counting total reward
 
 
-    random_rounds = 1000 # Number of rounds where the bot chooses to go monkey
+    random_rounds = 3200 # Number of rounds where the bot chooses to go monkey
 
     trial_meta_info = {} # For monitoring what happens in each trial
 
@@ -280,10 +280,11 @@ class ChimpBot(MonkeyBot):
 
         self.net_reward = 0
 
+        self.reset_counter += 1
+
         if self.reset_counter % 100 == 0:
             self.update_q_model()
 
-        self.reset_counter += 1
         # self.num_step = 0 # Recalculate the steps for the new trial
         # self.penalty = False
         # self.fail = False

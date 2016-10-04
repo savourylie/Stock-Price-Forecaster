@@ -6,7 +6,7 @@ from copy import deepcopy
 def main():
 	# Initiating data and the chimp
 	# dfEnv = pd.read_csv('data_train_char.csv', index_col=0, parse_dates=True, na_values = ['nan'])
-	dfEnv = pd.read_csv('data_full.csv', index_col=0, parse_dates=True, na_values = ['nan'])
+	dfEnv = pd.read_csv('data_train.csv', index_col=0, parse_dates=True, na_values = ['nan'])
 	# dfTest = pd.read_csv('data_cv.csv', index_col=0, parse_dates=True, na_values = ['nan'])
 	# dfEnv.ix[:, :-1] = dfEnv.ix[:, :-1].astype('int')
 	chimp = ChimpBot(dfEnv)
@@ -15,7 +15,7 @@ def main():
 	# q_dict_length = []
 
 	# Train the Chimp
-	for i in range(3000):
+	for i in range(3500):
 		for j in range(len(chimp.env)):
 			print("{0}-{1}".format(i + 1, j + 1))
 			chimp.update()
@@ -33,7 +33,7 @@ def main():
 	    result_dict['Q'].append(chimp.q_dict[index][0])
 
 	q_df = pd.DataFrame(result_dict)
-	q_df.to_csv('q_df_3000_full.csv')
+	q_df.to_csv('q_df_32_35_train.csv')
 
 
 	# Test the Chimp!
