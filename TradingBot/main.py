@@ -17,7 +17,7 @@ def main():
 	for i in range(12000):
 		# Train the Chimp on full_data
 		for l in range(len(chimp_full.env)):
-			print("Train Round {0}-{1}".format(i + 1, j + 1))
+			print("Full Round {0}-{1}".format(i + 1, l + 1))
 			chimp_full.update()
 		chimp_full.reset()
 
