@@ -23,7 +23,7 @@ class ChimpBot(MonkeyBot):
     total_net_reward = 0 # For counting total reward
 
 
-    random_rounds = 3200 # Number of rounds where the bot chooses to go monkey
+    random_rounds = 11500 # Number of rounds where the bot chooses to go monkey
 
     trial_meta_info = {} # For monitoring what happens in each trial
 
@@ -108,7 +108,8 @@ class ChimpBot(MonkeyBot):
         arr_int = np.vectorize(str_float_int)
 
         self.q_df['col39'] = self.q_df['col39'].apply(transfer_action)
-        print(self.q_df)
+        # print(self.q_df)
+
         # self.q_df.to_csv('temp_q_df.csv')
         # self.q_df = pd.read_csv('temp_q_df.csv', index_col=0, parse_dates=True, na_values = ['nan'])
         # self.q_df.dropna(inplace=True)
@@ -127,7 +128,7 @@ class ChimpBot(MonkeyBot):
         # self.q_reg = KNeighborsRegressor(n_neighbors=5)
         self.q_reg = reg_gs
 
-        print(self.q_df_X)
+        # print(self.q_df_X)
         self.q_reg = self.q_reg.fit(self.q_df_X, self.q_df_y)
 
     def update_q_model(self):
@@ -203,9 +204,9 @@ class ChimpBot(MonkeyBot):
                     pred_q = self.q_reg.predict(single_X)
                     dreamed_q = (1 - (1 / (self.q_dict[now_row_key][1] + 1))) * self.q_dict[now_row_key][0] + (1 / (self.q_dict[now_row_key][1] + 1)) * pred_q[0]
                     self.q_dict[now_row_key] = (dreamed_q, self.q_dict[now_row_key][1] + 1)
-                    print("Q-dreamed: {0} for Act: {1}, taking {2} seconds.".format(self.q_dict[now_row_key], act, time.time() - start_time))
+                    # print("Q-dreamed: {0} for Act: {1}, taking {2} seconds.".format(self.q_dict[now_row_key], act, time.time() - start_time))
 
-            print(act, self.q_dict[now_row_key])
+            # print(act, self.q_dict[now_row_key])
 
             q_compare_dict[now_row_key] = self.q_dict[now_row_key]
             now_row2.pop()
@@ -216,7 +217,7 @@ class ChimpBot(MonkeyBot):
             print("Wrong Q Value in Q Compare Dict!")
         else:
             key, qAndT = max(q_compare_dict.iteritems(), key=lambda x:x[1])
-            print("Action: {0}, with Q-value: {1}".format(key[-1], qAndT[0]))
+            # print("Action: {0}, with Q-value: {1}".format(key[-1], qAndT[0]))
             return key[-1], qAndT[0], qAndT[1]
 
     def q_update(self):
@@ -250,7 +251,7 @@ class ChimpBot(MonkeyBot):
 
         self.q_dict[prev_states_key] = (q_temp0, q_temp[1] + 1)
         # print("Now Action: {}".format())
-        print(prev_states_key)
+        # print(prev_states_key)
         return (self.q_dict[prev_states_key])
 
     def policy(self, now_row):
@@ -330,7 +331,7 @@ class ChimpBot(MonkeyBot):
 
         self.now_yes_share = self.yes_share()
 
-        print("Now Action: {}".format(action))
+        print("Now Action Real: {}".format(action))
         # Execute action and get reward
         if action == 'Buy':
             # print(self.now_row)
