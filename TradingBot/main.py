@@ -3,119 +3,189 @@ import pandas as pd
 from collections import defaultdict
 from copy import deepcopy
 import pickle
+import time
 
 def main():
-	# Initiating data and the chimp
-	dfFull = pd.read_csv('data_full.csv', index_col=0, parse_dates=True, na_values = ['nan'])
-	dfEnv = pd.read_csv('data_train.csv', index_col=0, parse_dates=True, na_values = ['nan'])
-	dfTest = pd.read_csv('data_test.csv', index_col=0, parse_dates=True, na_values = ['nan'])
+    # Initiating data and the chimp
+    dfFull = pd.read_csv('data_full.csv', index_col=0, parse_dates=True, na_values = ['nan'])
+    train_size = 8095
+    date_range = dfFull.index[train_size:] # Using one-year data to predict one day
+    day_count = 0
+    pv_history_list = []
 
-	chimp_full = ChimpBot(dfFull)
-	chimp_train = ChimpBot(dfEnv)
-	chimp_test = ChimpBot(dfTest)
+    cash = 1000
+    share = 0
+    pv = 0
+    now_yes_share = 0
 
-	for i in range(12000):
-		# Train the Chimp on full_data
-		for l in range(len(chimp_full.env)):
-			print("Full Round {0}-{1}".format(i + 1, l + 1))
-			chimp_full.update()
-		chimp_full.reset()
+    for date in date_range:
+        start_time = time.time()
+        day_count += 1
+        print("Day {}".format(day_count))
 
-		# Train the Chimp on train_data
-		for j in range(len(chimp_train.env)):
-			print("Train Round {0}-{1}".format(i + 1, j + 1))
-			chimp_train.update()
-		chimp_train.reset()
+        dfTest = dfFull.ix[date].to_frame().T
+        (u,) = dfFull.index.get_indexer_for([date])
 
-		# Train the Chimp on test_data
-		for k in range(len(chimp_test.env)):
-			print("Test Round {0}-{1}".format(i + 1, k + 1))
-			chimp_test.update()
-		chimp_test.reset()
+        if u - train_size < 0:
+            raise ValueError("Not enough training data!")
 
-	with open('chimp_full_11500_pv_history.pickle', 'wb') as f1:
-		pickle.dump(chimp_full.pv_history_list, f1, pickle.HIGHEST_PROTOCOL)
-	print(chimp_full.pv_history_list)
+        dfTrain = dfFull.iloc[(u - train_size):u]
 
-	with open('chimp_train_11500_pv_history.pickle', 'wb') as f1:
-		pickle.dump(chimp_train.pv_history_list, f1, pickle.HIGHEST_PROTOCOL)
-	print(chimp_train.pv_history_list)
+        chimp_train = ChimpBot(dfTrain)
 
-	with open('chimp_test_11500_pv_history.pickle', 'wb') as f2:
-		pickle.dump(chimp_test.pv_history_list, f2, pickle.HIGHEST_PROTOCOL)
-	print(chimp_test.pv_history_list)
+        for i in range(1500):
+            for l in range(len(chimp_train.env)):
+                # print("Train Round {0}-{1}".format(i + 1, l + 1))
+                chimp_train.update()
+            chimp_train.reset()
 
-	# Convert Q-Table to Dataframe from trained chimp (train)
-	result_dict_full = defaultdict(list)
-	for index, row in chimp_full.q_dict.iteritems():
-	    for i in range(len(chimp_full.q_dict.keys()[0])):
-	        column_name = 'col' + str(i + 1)
-	        result_dict_full[column_name].append(index[i])
-	    result_dict_full['Q'].append(chimp_full.q_dict[index][0])
+        # Test the Chimp!
+        q_df = deepcopy(chimp_train.q_df)
+        q_dict = deepcopy(chimp_train.q_dict)
+        q_reg = deepcopy(chimp_train.q_reg)
 
-	q_df = pd.DataFrame(result_dict_full)
-	q_df.to_csv('q_df_11500_full.csv')
+        try:
+            _ = chimp_test
+        except NameError:
+            print("First time running...")
+        else:
+            cash = chimp_test.cash
+            share = chimp_test.share
+            pv = chimp_test.pv
+            now_yes_share = chimp_test.now_yes_share
 
-	# Convert Q-Table to Dataframe from trained chimp (train)
-	result_dict_train = defaultdict(list)
-	for index, row in chimp_train.q_dict.iteritems():
-	    for i in range(len(chimp_train.q_dict.keys()[0])):
-	        column_name = 'col' + str(i + 1)
-	        result_dict_train[column_name].append(index[i])
-	    result_dict_train['Q'].append(chimp_train.q_dict[index][0])
+        chimp_test = ChimpBot(dfTest, cash=cash, share=share, pv=pv, now_yes_share=now_yes_share)
 
-	q_df = pd.DataFrame(result_dict_train)
-	q_df.to_csv('q_df_11500_train.csv')
+        chimp_test.q_df = deepcopy(q_df)
+        chimp_test.q_dict = deepcopy(q_dict)
+        chimp_test.q_reg = deepcopy(q_reg)
+        chimp_test.epsilon = 0
 
-	# Convert Q-Table to Dataframe from trained chimp (train)
-	result_dict_test = defaultdict(list)
-	for index, row in chimp_test.q_dict.iteritems():
-	    for i in range(len(chimp_test.q_dict.keys()[0])):
-	        column_name = 'col' + str(i + 1)
-	        result_dict_test[column_name].append(index[i])
-	    result_dict_test['Q'].append(chimp_test.q_dict[index][0])
+        # Pass the cheatsheet to the next chimp
+        try:
+            chimp_test.prev_states = prev_states
+            chimp_test.now_action = now_action
+            chimp_test.prev_action = prev_action
+            chimp_test.prev_yes_share = prev_yes_share
+            chimp_test.prev_reward = prev_reward
+            chimp_test.prev_cash = prev_cash
+            chimp_test.prev_share = prev_share
+            chimp_test.prev_pv = prev_pv
 
-	q_df = pd.DataFrame(result_dict_test)
-	q_df.to_csv('q_df_11500_test.csv')
+        except UnboundLocalError:
+            print("No cheatsheet to pass over yet...no worries!")
+        else:
+            print("Prev States: {}".format(prev_states))
+            print("Prev Action: {}".format(prev_action))
 
-	# Save the chimp train properties
-	# Save q_df
-	# with open('3200_train_q_df.pickle', 'wb') as f:
-	# 	pickle.dump(chimp_train.q_df, f, pickle.HIGHEST_PROTOCOL)
-	# # Save q_dict
-	# with open('3200_train_q_dict.pickle', 'wb') as f:
-	# 	pickle.dump(chimp_train.q_dict, f, pickle.HIGHEST_PROTOCOL)
-	# # Save q_reg
-	# with open('3200_train_q_reg.pickle', 'wb') as f:
-	# 	pickle.dump(chimp_train.q_reg, f, pickle.HIGHEST_PROTOCOL)
+        chimp_test.update()
 
-	try:
-		print(chimp_train.q_dict)
-	except AttributeError:
-		print("No q_dict? No big deal I guess...?")
+        # Create cheatsheet for the next chimp
+        prev_states = chimp_test.prev_states
+        now_action = chimp_test.now_action
+        prev_action = chimp_test.prev_action
+        prev_yes_share = chimp_test.prev_yes_share
+        prev_reward = chimp_test.prev_reward
+        prev_cash = chimp_test.prev_cash
+        prev_share = chimp_test.prev_share
+        prev_pv = chimp_test.prev_pv
 
-	# Test the Chimp!
-	q_df = deepcopy(chimp_train.q_df)
-	q_dict = deepcopy(chimp_train.q_dict)
-	q_reg = deepcopy(chimp_train.q_reg)
+        pv_history_list.append(chimp_test.cash + chimp_test.pv)
 
-	chimp_real_test = ChimpBot(dfTest)
+        print("Training + Prediction for Day {0} took {1} seconds.".format(day_count, time.time() - start_time))
+        print("Now States: {}".format((chimp_test.now_env_index, chimp_test.now_row.to_frame().T)))
+        print("Now Action: {}".format(chimp_test.now_action))
+        print "ChimpTest.update(): Action: {0} at Price: {1}, Cash: {2}, Num_Share: {3}, Cash + PV = {4}, Reward = {5}".format(now_action, chimp_test.now_row[-1], chimp_test.cash, chimp_test.share, chimp_test.cash + chimp_test.pv, chimp_test.reward)  # [debug]
+        print('Portfolio + Cash: {}'.format(chimp_test.cash + chimp_test.pv))
+        print("================================")
 
-	for i in range(1000): # For statistic significance
-		chimp_real_test.q_df = deepcopy(q_df)
-		chimp_real_test.q_dict = deepcopy(q_dict)
-		chimp_real_test.q_reg = deepcopy(q_reg)
-		chimp_real_test.epsilon = 0.01
+        if day_count % 10 == 0:
+            print(pv_history_list)
 
-		for j in range(len(chimp_real_test.env)):
-			print("Iter-Row: {0}-{1}".format(i, j))
-			chimp_real_test.update()
-		chimp_real_test.reset()
+    # with open('chimp_full_11500_pv_history.pickle', 'wb') as f1:
+    #   pickle.dump(chimp_full.pv_history_list, f1, pickle.HIGHEST_PROTOCOL)
+    # print(chimp_full.pv_history_list)
 
-	with open('chimp_real_test_11500_pv_history.pickle', 'wb') as f:
-		pickle.dump(chimp_real_test.pv_history_list, f, pickle.HIGHEST_PROTOCOL)
-	print(chimp_real_test.pv_history_list)
+    # with open('chimp_train_11500_pv_history.pickle', 'wb') as f1:
+    #   pickle.dump(chimp_train.pv_history_list, f1, pickle.HIGHEST_PROTOCOL)
+    # print(chimp_train.pv_history_list)
+
+    # with open('chimp_test_11500_pv_history.pickle', 'wb') as f2:
+    #   pickle.dump(chimp_test.pv_history_list, f2, pickle.HIGHEST_PROTOCOL)
+    # print(chimp_test.pv_history_list)
+
+    # Convert Q-Table to Dataframe from trained chimp (full)
+    # print(chimp_full.q_dict)
+    # result_dict_full = defaultdict(list)
+    # for index, row in chimp_full.q_dict.iteritems():
+    #     for i in range(len(chimp_full.q_dict.keys()[0])):
+    #         column_name = 'col' + str(i + 1)
+    #         result_dict_full[column_name].append(index[i])
+    #     result_dict_full['Q'].append(chimp_full.q_dict[index][0])
+
+    # q_df = pd.DataFrame(result_dict_full)
+    # q_df.to_csv('q_df_100_full.csv')
+
+    # # Convert Q-Table to Dataframe from trained chimp (train)
+    # result_dict_train = defaultdict(list)
+    # for index, row in chimp_train.q_dict.iteritems():
+    #     for i in range(len(chimp_train.q_dict.keys()[0])):
+    #         column_name = 'col' + str(i + 1)
+    #         result_dict_train[column_name].append(index[i])
+    #     result_dict_train['Q'].append(chimp_train.q_dict[index][0])
+
+    # q_df = pd.DataFrame(result_dict_train)
+    # q_df.to_csv('q_df_11500_train.csv')
+
+    # # Convert Q-Table to Dataframe from trained chimp (test)
+    # result_dict_test = defaultdict(list)
+    # for index, row in chimp_test.q_dict.iteritems():
+    #     for i in range(len(chimp_test.q_dict.keys()[0])):
+    #         column_name = 'col' + str(i + 1)
+    #         result_dict_test[column_name].append(index[i])
+    #     result_dict_test['Q'].append(chimp_test.q_dict[index][0])
+
+    # q_df = pd.DataFrame(result_dict_test)
+    # q_df.to_csv('q_df_11500_test.csv')
+
+    # Save the chimp train properties <--- Not working
+    # Save q_df
+    # with open('3200_train_q_df.pickle', 'wb') as f:
+    #   pickle.dump(chimp_train.q_df, f, pickle.HIGHEST_PROTOCOL)
+    # # Save q_dict
+    # with open('3200_train_q_dict.pickle', 'wb') as f:
+    #   pickle.dump(chimp_train.q_dict, f, pickle.HIGHEST_PROTOCOL)
+    # # Save q_reg
+    # with open('3200_train_q_reg.pickle', 'wb') as f:
+    #   pickle.dump(chimp_train.q_reg, f, pickle.HIGHEST_PROTOCOL)
+
+    # try:
+    #   print(chimp_train.q_dict)
+    # except AttributeError:
+    #   print("No q_dict? No big deal I guess...?")
+
+    # # Test the Chimp!
+    # q_df = deepcopy(chimp_train.q_df)
+    # q_dict = deepcopy(chimp_train.q_dict)
+    # q_reg = deepcopy(chimp_train.q_reg)
+
+    # chimp_real_test = ChimpBot(dfTest)
+
+    # for i in range(1000): # For statistic significance
+    #   chimp_real_test.q_df = deepcopy(q_df)
+    #   chimp_real_test.q_dict = deepcopy(q_dict)
+    #   chimp_real_test.q_reg = deepcopy(q_reg)
+    #   chimp_real_test.epsilon = 0.01
+
+    #   for j in range(len(chimp_real_test.env)):
+    #       print("Iter-Row: {0}-{1}".format(i, j))
+    #       chimp_real_test.update()
+    #   chimp_real_test.reset()
+
+    # with open('chimp_real_test_11500_pv_history.pickle', 'wb') as f:
+    #   pickle.dump(chimp_real_test.pv_history_list, f, pickle.HIGHEST_PROTOCOL)
+    # print(chimp_real_test.pv_history_list)
 
 
 if __name__ == '__main__':
-	main()
+    main()

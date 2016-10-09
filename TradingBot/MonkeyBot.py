@@ -1,10 +1,10 @@
 import random
 
 class MonkeyBot(object):
-    def __init__(self, dfEnv):
-        self.cash = 1000
-        self.share = 0
-        self.pv = 0
+    def __init__(self, dfEnv, cash=1000, share=0, pv=0, now_yes_share=0):
+        self.cash = cash
+        self.share = share
+        self.pv = pv
         self.pv_history_list = []
         self.env = dfEnv
 
@@ -26,6 +26,13 @@ class MonkeyBot(object):
         self.cash = 1000
         self.share = 0
         self.pv = 0
+
+    def yes_share(self):
+        # Represent chimp asset in state_action
+        if self.share > 0:
+            return 1
+        else:
+            return 0
 
     def make_decision(self, x):
         random_choice = random.randint(0, 2)

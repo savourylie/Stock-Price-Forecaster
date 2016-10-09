@@ -8,6 +8,7 @@ import numpy as np
 from datetime import datetime, timedelta
 import time
 import random
+from copy import deepcopy
 
 from sklearn import cross_validation
 from sklearn.tree import DecisionTreeRegressor
@@ -23,7 +24,7 @@ class ChimpBot(MonkeyBot):
     total_net_reward = 0 # For counting total reward
 
 
-    random_rounds = 11500 # Number of rounds where the bot chooses to go monkey
+    random_rounds = 3000 # Number of rounds where the bot chooses to go monkey
 
     trial_meta_info = {} # For monitoring what happens in each trial
 
@@ -41,8 +42,8 @@ class ChimpBot(MonkeyBot):
 
     reset_counter = 0
 
-    def __init__(self, dfEnv):
-        super(ChimpBot, self).__init__(dfEnv)
+    def __init__(self, dfEnv, cash=1000, share=0, pv=0, now_yes_share=0):
+        super(ChimpBot, self).__init__(dfEnv, cash, share, pv, now_yes_share)
         # sets self.cash = 1000
         # sets self.share = 0
         # sets self.pv = 0
@@ -67,7 +68,7 @@ class ChimpBot(MonkeyBot):
         self.q_df_columns.pop()
         self.q_df_columns.extend(['Yes Share', 'Action', 'Q Value'])
         self.q_df = pd.DataFrame(columns=self.q_df_columns)
-        self.q_dict = defaultdict(lambda: (0, 0)) # element of q_dict is (state, act): [q_value, t]
+        self.q_dict = defaultdict(lambda: (0, 0)) # element of q_dict is (state, act): (q_value, t)
 
         self.negative_reward = 0
         self.n_reward_hisotry = []
@@ -188,11 +189,12 @@ class ChimpBot(MonkeyBot):
             try:
                 self.q_reg
             except AttributeError:
-                print('No q_reg yet...going with default.')
+                pass
+                # print('No q_reg yet...going with default.')
             else:
                 if _[1] == 0:
-                    print("Dreaming mode...")
-                    start_time = time.time()
+                    # print("Dreaming mode...")
+                    # start_time = time.time()
                     # self.update_q_model()
 
                     single_X = np.array(now_row_key)
@@ -221,7 +223,7 @@ class ChimpBot(MonkeyBot):
             return key[-1], qAndT[0], qAndT[1]
 
     def q_update(self):
-        print("Data Index: {}".format(self.now_env_index))
+        # print("Data Index: {}".format(self.now_env_index))
         now_states = list(self.now_row)
         # now_states = list(now_states)
         now_states.pop() # disregard the Trade Price
@@ -283,7 +285,7 @@ class ChimpBot(MonkeyBot):
 
         self.reset_counter += 1
 
-        if self.reset_counter % 100 == 0:
+        if self.reset_counter % 1500 == 0:
             self.update_q_model()
 
         # self.num_step = 0 # Recalculate the steps for the new trial
@@ -314,7 +316,7 @@ class ChimpBot(MonkeyBot):
         self.decision = np.random.choice(2, p = [self.epsilon, 1 - self.epsilon]) # decide to go random or with the policy
         # self.decision = 0 # Force random mode
 
-        print("Random decision: {0}, Epislon: {1}".format(self.decision, self.epsilon))
+        # print("Random decision: {0}, Epislon: {1}".format(self.decision, self.epsilon))
         # print("What the FUCK?!")
         if self.decision == 0: # if zero, go random
             random.seed(datetime.now())
@@ -322,7 +324,7 @@ class ChimpBot(MonkeyBot):
             if tuple(now_states) == ('Low', 'Low', 'Average', 'Average', 'Low', 'Average', 'Average', 'Average', 'Low', 'Low', 'Low', 'Low', 'Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'N-Very Low', 'Low', 'Average', 'N-Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'High'):
                 self.track_random_decision[action] += 1
         else: # else go with the policy
-            print("now_states: {}".format(now_states))
+            # print("now_states: {}".format(now_states))
             action = self.make_decision(now_states)
 
         if len(now_states) > 37:
@@ -331,7 +333,7 @@ class ChimpBot(MonkeyBot):
 
         self.now_yes_share = self.yes_share()
 
-        print("Now Action Real: {}".format(action))
+        # print("Now Action Real: {}".format(action))
         # Execute action and get reward
         if action == 'Buy':
             # print(self.now_row)
@@ -352,7 +354,7 @@ class ChimpBot(MonkeyBot):
         else:
             self.q_update()
 
-        reward = ((self.cash - self.prev_cash) + (self.pv - self.prev_pv)) / (self.prev_cash + self.prev_pv)
+        self.reward = ((self.cash - self.prev_cash) + (self.pv - self.prev_pv)) / (self.prev_cash + self.prev_pv)
 
         self.prev_states = now_states
 
@@ -362,7 +364,8 @@ class ChimpBot(MonkeyBot):
         self.now_action = action
         self.prev_action = action
         self.prev_yes_share = self.now_yes_share
-        self.prev_reward = reward
+        # self.prev_env_index = deepcopy(self.now_env_index)
+        self.prev_reward = self.reward
         self.prev_cash = self.cash
         self.prev_share = self.share
         self.prev_pv = self.pv
@@ -373,18 +376,19 @@ class ChimpBot(MonkeyBot):
         try:
             self.now_env_index, self.now_row = self.iter_env.next()
         except StopIteration:
-            print("End of data.")
+            pass
+            # print("End of data.")
         else:
             pass
 
-        self.net_reward += reward
+        self.net_reward += self.reward
 
         # if reward < 0:
         #     self.penalty = True
 
-        self.total_net_reward += reward
+        self.total_net_reward += self.reward
 
-        print "ChimpBot.update(): Action: {0} at Price: {1}, Cash: {2}, Num_Share: {3}, Cash + PV = {4}, Reward = {5}".format(action, self.now_row[-1], self.cash, self.share, self.cash + self.pv, reward)  # [debug]
-        print('Portfolio + Cash: {}'.format(self.cash + self.pv))
-        print("================================")
+        # print "ChimpBot.update(): Action: {0} at Price: {1}, Cash: {2}, Num_Share: {3}, Cash + PV = {4}, Reward = {5}".format(action, self.now_row[-1], self.cash, self.share, self.cash + self.pv, self.reward)  # [debug]
+        # print('Portfolio + Cash: {}'.format(self.cash + self.pv))
+        # print("================================")
 
