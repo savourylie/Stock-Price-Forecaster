@@ -21,8 +21,6 @@ class ChimpBot(MonkeyBot):
     valid_actions = ['Buy', 'Sell', 'Hold']
     num_trial = 500
     trial_counter = 0 # For getting the trial number
-    total_net_reward = 0 # For counting total reward
-
 
     random_rounds = 3000 # Number of rounds where the bot chooses to go monkey
 
@@ -69,6 +67,7 @@ class ChimpBot(MonkeyBot):
         self.q_df_columns.extend(['Yes Share', 'Action', 'Q Value'])
         self.q_df = pd.DataFrame(columns=self.q_df_columns)
         self.q_dict = defaultdict(lambda: (0, 0)) # element of q_dict is (state, act): (q_value, t)
+        self.q_dict_analysis = defaultdict(lambda: (0, 0))
 
         self.negative_reward = 0
         self.n_reward_hisotry = []
@@ -242,7 +241,7 @@ class ChimpBot(MonkeyBot):
 
         q_temp = self.q_dict[prev_states_key]
 
-        q_temp0 = (1 - (1 / (q_temp[1] + 1))) * q_temp[0] + (1 / (q_temp[1] + 1)) * (self.prev_reward + self.gamma * self.max_q(now_states)[1])
+        q_temp0 = (1 - (1 / (q_temp[1] + 1))) * q_temp[0] + (1 / (q_temp[1] + 1)) * (self.reward + self.gamma * self.max_q(now_states)[1])
 
         if prev_states_key[:-1] == ('Low', 'Low', 'Average', 'Average', 'Low', 'Average', 'Average', 'Average', 'Low', 'Low', 'Low', 'Low', 'Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'N-Very Low', 'Low', 'Average', 'N-Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'Very Low', 'High', 'Yes'):
             self.track_key1[prev_states_key[-1]] += 1
@@ -252,6 +251,8 @@ class ChimpBot(MonkeyBot):
         #     self.track_key2[prev_states_key[-1]] += 1
 
         self.q_dict[prev_states_key] = (q_temp0, q_temp[1] + 1)
+        # For analysis purpose
+        self.q_dict_analysis[prev_states_key] = (q_temp0, self.prev_env_index)
         # print("Now Action: {}".format())
         # print(prev_states_key)
         return (self.q_dict[prev_states_key])
@@ -274,18 +275,18 @@ class ChimpBot(MonkeyBot):
         self.prev_share = self.share
         self.prev_pv = self.pv
 
-        if self.epsilon - 1/self.random_rounds > 0.01: # Epislon threshold: 0.01
+        if self.epsilon - 1/self.random_rounds > 0.001: # Epislon threshold: 0.01
             self.random_counter += 1
             self.epsilon = self.epsilon - 1/self.random_rounds
         else:
-            self.epsilon = 0.01 # Epislon threshold: 0.1
+            self.epsilon = 0.001 # Epislon threshold: 0.1
             self.policy_counter += 1
 
         self.net_reward = 0
 
         self.reset_counter += 1
 
-        if self.reset_counter % 1500 == 0:
+        if self.reset_counter % 3000 == 0:
             self.update_q_model()
 
         # self.num_step = 0 # Recalculate the steps for the new trial
@@ -325,13 +326,12 @@ class ChimpBot(MonkeyBot):
                 self.track_random_decision[action] += 1
         else: # else go with the policy
             # print("now_states: {}".format(now_states))
+            self.now_yes_share = self.yes_share()
             action = self.make_decision(now_states)
 
         if len(now_states) > 37:
             print(now_states)
             raise ValueError("Got ya bastard! @ Q_Update...something wrong with now_states after make_decision!!!")
-
-        self.now_yes_share = self.yes_share()
 
         # print("Now Action Real: {}".format(action))
         # Execute action and get reward
@@ -352,9 +352,8 @@ class ChimpBot(MonkeyBot):
         except AttributeError:
             print("Running the first time...no prevs exist.")
         else:
+            self.reward = ((self.cash - self.prev_cash) + (self.pv - self.prev_pv)) / (self.prev_cash + self.prev_pv)
             self.q_update()
-
-        self.reward = ((self.cash - self.prev_cash) + (self.pv - self.prev_pv)) / (self.prev_cash + self.prev_pv)
 
         self.prev_states = now_states
 
@@ -364,8 +363,7 @@ class ChimpBot(MonkeyBot):
         self.now_action = action
         self.prev_action = action
         self.prev_yes_share = self.now_yes_share
-        # self.prev_env_index = deepcopy(self.now_env_index)
-        self.prev_reward = self.reward
+        self.prev_env_index = deepcopy(self.now_env_index)
         self.prev_cash = self.cash
         self.prev_share = self.share
         self.prev_pv = self.pv
@@ -381,13 +379,14 @@ class ChimpBot(MonkeyBot):
         else:
             pass
 
-        self.net_reward += self.reward
-
         # if reward < 0:
         #     self.penalty = True
 
-        self.total_net_reward += self.reward
-
+        try:
+            _ = self.reward
+        except AttributeError:
+            print("No reward yet...0 assigned.")
+            self.reward = 0
         # print "ChimpBot.update(): Action: {0} at Price: {1}, Cash: {2}, Num_Share: {3}, Cash + PV = {4}, Reward = {5}".format(action, self.now_row[-1], self.cash, self.share, self.cash + self.pv, self.reward)  # [debug]
         # print('Portfolio + Cash: {}'.format(self.cash + self.pv))
         # print("================================")

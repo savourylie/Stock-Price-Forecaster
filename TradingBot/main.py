@@ -5,11 +5,12 @@ from copy import deepcopy
 import pickle
 import time
 
-def main():
+def main_simulate():
     # Initiating data and the chimp
     dfFull = pd.read_csv('data_full.csv', index_col=0, parse_dates=True, na_values = ['nan'])
     train_size = 8095
     date_range = dfFull.index[train_size:] # Using one-year data to predict one day
+    print(date_range)
     day_count = 0
     pv_history_list = []
 
@@ -33,7 +34,7 @@ def main():
 
         chimp_train = ChimpBot(dfTrain)
 
-        for i in range(1500):
+        for i in range(2000):
             for l in range(len(chimp_train.env)):
                 # print("Train Round {0}-{1}".format(i + 1, l + 1))
                 chimp_train.update()
@@ -101,6 +102,7 @@ def main():
 
         if day_count % 10 == 0:
             print(pv_history_list)
+    print(pv_history_list)
 
     # with open('chimp_full_11500_pv_history.pickle', 'wb') as f1:
     #   pickle.dump(chimp_full.pv_history_list, f1, pickle.HIGHEST_PROTOCOL)
@@ -186,6 +188,37 @@ def main():
     #   pickle.dump(chimp_real_test.pv_history_list, f, pickle.HIGHEST_PROTOCOL)
     # print(chimp_real_test.pv_history_list)
 
+def generate_Q_table():
+    dfFull = pd.read_csv('data_full.csv', index_col=0, parse_dates=True, na_values = ['nan'])
+    num_iter = 3000
+    day_count = 0
+    pv_history_list = []
+
+    chimp = ChimpBot(dfFull)
+
+    for i in range(num_iter):
+        print("Iter {}".format(i + 1))
+        for l in range(len(chimp.env)):
+            chimp.update()
+        print("Total Asset {}: ".format(chimp.cash + chimp.pv))
+        pv_history_list.append(chimp.cash + chimp.pv)
+        chimp.reset()
+
+    print(pv_history_list)
+
+    # Convert Q-Table to Dataframe from trained chimp (full)
+    result_dict = defaultdict(list)
+    for index, row in chimp.q_dict_analysis.iteritems():
+        for i in range(len(chimp.q_dict_analysis.keys()[0])):
+            column_name = 'col' + str(i + 1)
+            result_dict[column_name].append(index[i])
+        result_dict['Q'].append(chimp.q_dict_analysis[index][0])
+        result_dict['Date'].append(chimp.q_dict_analysis[index][1])
+
+    q_df = pd.DataFrame(result_dict)
+    q_df.to_csv('q_df_' + str(num_iter) + '_full.csv')
+
 
 if __name__ == '__main__':
-    main()
+    # main_simulate()
+    generate_Q_table()
