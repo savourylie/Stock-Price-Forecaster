@@ -30,11 +30,12 @@ def main_simulate():
         if u - train_size < 0:
             raise ValueError("Not enough training data!")
 
-        dfTrain = dfFull.iloc[(u - train_size):u]
+        # dfTrain = dfFull.iloc[(u - train_size):u]
+        dfTrain = dfFull.iloc[:u]
 
         chimp_train = ChimpBot(dfTrain)
 
-        for i in range(2000):
+        for i in range(3500):
             for l in range(len(chimp_train.env)):
                 # print("Train Round {0}-{1}".format(i + 1, l + 1))
                 chimp_train.update()
@@ -68,7 +69,7 @@ def main_simulate():
             chimp_test.now_action = now_action
             chimp_test.prev_action = prev_action
             chimp_test.prev_yes_share = prev_yes_share
-            chimp_test.prev_reward = prev_reward
+            chimp_test.reward = reward
             chimp_test.prev_cash = prev_cash
             chimp_test.prev_share = prev_share
             chimp_test.prev_pv = prev_pv
@@ -86,7 +87,7 @@ def main_simulate():
         now_action = chimp_test.now_action
         prev_action = chimp_test.prev_action
         prev_yes_share = chimp_test.prev_yes_share
-        prev_reward = chimp_test.prev_reward
+        reward = chimp_test.reward
         prev_cash = chimp_test.prev_cash
         prev_share = chimp_test.prev_share
         prev_pv = chimp_test.prev_pv
@@ -190,7 +191,7 @@ def main_simulate():
 
 def generate_Q_table():
     dfFull = pd.read_csv('data_full.csv', index_col=0, parse_dates=True, na_values = ['nan'])
-    num_iter = 3000
+    num_iter = 3500
     day_count = 0
     pv_history_list = []
 
@@ -220,5 +221,5 @@ def generate_Q_table():
 
 
 if __name__ == '__main__':
-    # main_simulate()
+    main_simulate()
     generate_Q_table()

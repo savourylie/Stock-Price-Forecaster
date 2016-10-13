@@ -18,16 +18,18 @@ from sklearn import grid_search
 
 class ChimpBot(MonkeyBot):
     """An agent that learns to drive in the smartcab world."""
-    valid_actions = ['Buy', 'Sell', 'Hold']
+    # valid_actions = ['Buy', 'Sell', 'Hold']
+    valid_actions = ['Buy', 'Sell']
+
     num_trial = 500
     trial_counter = 0 # For getting the trial number
 
-    random_rounds = 3000 # Number of rounds where the bot chooses to go monkey
+    random_rounds = 3500 # Number of rounds where the bot chooses to go monkey
 
     trial_meta_info = {} # For monitoring what happens in each trial
 
     epsilon = 1
-    gamma = 0.8
+    gamma = 0.75
     random_reward = [0]
 
     random_counter = 0
@@ -286,7 +288,7 @@ class ChimpBot(MonkeyBot):
 
         self.reset_counter += 1
 
-        if self.reset_counter % 3000 == 0:
+        if self.reset_counter % 3500 == 0:
             self.update_q_model()
 
         # self.num_step = 0 # Recalculate the steps for the new trial
