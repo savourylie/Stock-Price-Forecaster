@@ -73,6 +73,7 @@ def main_simulate():
             chimp_test.prev_cash = prev_cash
             chimp_test.prev_share = prev_share
             chimp_test.prev_pv = prev_pv
+            chimp_test.prev_env_index = prev_env_index
 
         except UnboundLocalError:
             print("No cheatsheet to pass over yet...no worries!")
@@ -87,6 +88,7 @@ def main_simulate():
         now_action = chimp_test.now_action
         prev_action = chimp_test.prev_action
         prev_yes_share = chimp_test.prev_yes_share
+        prev_env_index = chimp_test.prev_env_index
         reward = chimp_test.reward
         prev_cash = chimp_test.prev_cash
         prev_share = chimp_test.prev_share
