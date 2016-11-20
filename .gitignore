@@ -3,3 +3,6 @@ TradingBot/new_data_full.csv
 TradingBot/new_q_df_full.csv
 TradingBot/data_full.csv
 TradingBot/new_data_full_pca.csv
+TradingBot/new_god_chimp_q_df20000.csv
+TradingBot/new_god_chimp_q_df5k_75.csv
+TradingBot/new_god_chimp_q_df5k_75_high.csv
