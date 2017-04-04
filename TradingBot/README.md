@@ -29,11 +29,11 @@ This simple metric is in line with what we want the trading bot to achieve in th
 #### First look
 Let's first take a glance at some statistics of our data and then see if there's any missing values
 
-![Alt text](./Screenshot from 2016-11-23 11-17-38.png)
+![Alt text](./img/first_look.png)
 
 Since we won't be using data prior to 1993 for training, we can use SPY (S&P 500 ETF) to get trading days and see if we have any data missing for JPM.
 
-![Alt text](./Screenshot from 2016-11-23 11-23-56.png)
+![Alt text](./img/trading_days.png)
 
 It seems to be good. Let's look at the first few lines:
 
@@ -49,7 +49,7 @@ Now let's have a look on the performance of JPM itself:
 Starting from the beginning, the stock price generally has a upward trend, with a bad time from 2001 to 2003 and the crush at the end of 2008.
 
 Now we can take a look at the correlations between the variables:
-![Alt text](./Screen Shot 2016-11-21 at 6.21.40 PM.png)
+![Alt text](./img/scatter_plot.png)
 
 We can see it clearly on the `Adj Close` rows and columns there are several lines. This is due to the fact that the `Adj Close` varaible are adjusted for times where there are splits and dividends payout. From here we know we'll need to adjust other variables to match it.
 
@@ -126,11 +126,11 @@ We shall test our Chimp against 100,000 random Monkeys and the Patient Trader we
 ## Methodology
 ### Data Preprocessing
 #### Adjust prices
-![Alt text](./Screen Shot 2016-11-21 at 6.37.13 PM.png)
+![Alt text](./img/raw_head.png)
 
 As said earlier, we need to adjust the prices of Open, High, Low, Close, Volume. This can be done by getting the adjustment fact by dividing Adj Close by Close. We then multiply the prices by this factor, and divide the volume by this factor.
 
-![Alt text](./Screen Shot 2016-11-21 at 6.38.16 PM.png)
+![Alt text](./img/adj_head_tail.png)
 
 #### Features engineering using volume price analysis
 Volume price analysis has been around for over 100 years, and there are many legendary traders who made themselves famous (and wealthy) using it. In addition to this, the basic principle behind it kind of makes sense on its own, that:
@@ -178,7 +178,7 @@ The reason why we choose 5, 10, 21, 63 days is because these are the common time
 
 Spread and wicks are terms to describe the status of the candlestick chart (see below).
 
-![Alt text](./Screenshot from 2016-11-23 11-40-43.png)
+![Alt text](./img/candlesticks.png)
 
 The spread describes the thick body part of the candlestick which shows the difference of the opening price and the closing price. The time frame (in terms of opening/closing) can range from minutes to months depending on what we want to look at (in our case, the time frame is one day). The wicks are the thin lines that extend at the top and the bottom, which describe whether there are stocks traded at prices beyond opening/closing prices during the day (or the specific time frame of interest). As shown in the picture, we can have white or black bodies on the candlestick chart to indicate the direction of the pricing movement, with white meaning $\text{closing price} > \text{opening price}$ and vice versa. On the other hand, a *candle* can have  a upperwick and/or a lowerwick or none at all.
 
@@ -282,11 +282,11 @@ $$
 #### Performances of the Monkey
 We use a `MonkeyBot` class which will place one and only one order randomly everyday. We iterate it through the time frame we choose 100,000 times and we get the following distributions:
 
-![Alt text](./Screen Shot 2016-11-21 at 7.02.10 PM.png)
-![Alt text](./Screen Shot 2016-11-21 at 6.42.01 PM.png)
+![Alt text](./img/valid_monkey.png)
+![Alt text](./img/valid_monkey_stats.png)
 
-![Alt text](./Screen Shot 2016-11-21 at 6.42.24 PM.png)
-![Alt text](./Screen Shot 2016-11-21 at 6.46.31 PM.png)
+![Alt text](./img/test_monkey.png)
+![Alt text](./img/test_monkey_stats.png)
 
 ##### Validation phase (2006-9-25 ~ 2011-9-25)
 Using the mean we can calculate $r_{val}$:
@@ -308,7 +308,7 @@ $$
 We let the God Chimp run through all the data to get the converged Q-table.
 
 ![Alt text](./1a3dfd7c-71ae-42de-b8a0-bb1eba69d967.png)
-![Alt text](./Screen Shot 2016-11-21 at 6.48.36 PM.png)
+![Alt text](./img/god_chimp_stats.png)
 
 ### Finding the right size for training set
 
@@ -316,11 +316,11 @@ As said earlier, one problem with time series data is to find the training windo
 
 To do this we can make use of the God Chimp's Q-table we just got and get:
 
-![Alt text](./Screen Shot 2016-11-21 at 6.50.14 PM.png)
+![Alt text](./img/training_windows_inspection.png)
 
 We can see a trend of accuracies going up and then down again. Here we choose 35 months of data to build our model.
 
-![Alt text](./Screen Shot 2016-11-21 at 7.13.16 PM.png)
+![Alt text](./img/valid_chimp.png)
 
 The result turns out to be really good!
 
@@ -336,7 +336,7 @@ $$
 
 The result is quite impressive compare to the Patient Trader (-5.54%) and the Monkey (-2.70%). Let's give the test set a shot!
 
-![Alt text](./Screen Shot 2016-11-21 at 7.23.11 PM.png)
+![Alt text](./img/test_chimp.png)
 
 The result turns out to be above the median by quite a lot (above 82% of the Monkeys).
 
@@ -357,7 +357,7 @@ Surely we wouldn't expect the Chimp to give us a 33% of ROI on the test dataset 
 
 So to fix this, we can introduce trading cost on the training stage so if it were just small ups and downs, the Chimp would refrain herself from being too greedy or she would be penalized by the trading cost.
 
-![Alt text](./Screen Shot 2016-11-21 at 7.27.14 PM.png)
+![Alt text](./img/test_chimp_refined.png)
 
 Seems like our refinement has beaten 89.7 percent of the Monkeys. And what is more is that it's in the lead from the beginning and really put a good distance between itself and Monkey and PT.
 
